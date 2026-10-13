@@ -1,0 +1,16 @@
+{
+  "name": "legacy-payment-system",
+  "version": "1.4.2",
+  "description": "Legacy transaction and payment processor with historical technical debt",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "crypto": "^1.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
