@@ -1,0 +1,277 @@
+@import "tailwindcss";
+@import "@xyflow/react/dist/style.css";
+
+:root {
+  /* Warm Light Theme — Orange/Coral Accent Palette */
+  --bg-app: #FAF9F7;
+  --bg-sidebar: #FFFFFF;
+  --bg-panel: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-subtle: #F5F4F1;
+  --bg-hover: #F0EFEC;
+  --bg-input: #FFFFFF;
+  --border-main: #E5E4E1;
+  --border-accent: rgba(232, 83, 46, 0.3);
+  --border-muted: #EEEEEB;
+
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+
+  /* Primary Orange/Coral */
+  --accent: #E8532E;
+  --accent-hover: #D4441F;
+  --accent-light: #FEF2ED;
+  --accent-bg: rgba(232, 83, 46, 0.06);
+
+  /* Status Colors */
+  --green: #16A34A;
+  --green-bg: rgba(22, 163, 74, 0.08);
+  --amber: #D97706;
+  --amber-bg: rgba(217, 119, 6, 0.08);
+  --red: #DC2626;
+  --red-bg: rgba(220, 38, 38, 0.08);
+}
+
+body {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* Clean Apple iOS Glassmorphic Card Component */
+.failade-card, .glass-card {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  border-radius: 1.125rem;
+  transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), 0 4px 20px -2px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.failade-card:hover, .glass-card:hover {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(232, 83, 46, 0.35);
+  box-shadow: inset 0 1px 2px 0 rgba(255, 255, 255, 1), 0 16px 36px -6px rgba(232, 83, 46, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px) scale(1.008);
+}
+
+/* Hyper-tactile Linear / Apple Card */
+.liquid-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.65) 100%);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 1), 0 8px 30px -4px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.02);
+  border-radius: 1.125rem;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.liquid-card:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.82) 100%);
+  border-color: rgba(232, 83, 46, 0.4);
+  box-shadow: inset 0 1px 2px 0 rgba(255, 255, 255, 1), 0 20px 40px -8px rgba(232, 83, 46, 0.14), 0 4px 14px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+.liquid-card:active {
+  transform: translateY(0) scale(0.99);
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+}
+
+@keyframes orangePulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(232, 83, 46, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(232, 83, 46, 0);
+  }
+}
+
+.pulse-active {
+  animation: pulseGlow 2.5s infinite;
+}
+
+.pulse-orange {
+  animation: orangePulse 2.5s infinite;
+}
+
+/* Translucent Glass Panel */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+}
+
+/* Translucent Glass Input */
+.glass-input {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(232, 83, 46, 0.12);
+}
+
+/* Orange Pill Badge */
+.failade-pill, .glass-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: rgba(254, 242, 237, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(232, 83, 46, 0.2);
+  color: var(--accent);
+}
+
+/* Primary Button — Apple tactile gradient with orange highlight */
+.failade-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(180deg, #F0562D 0%, #E8451D 100%);
+  color: #FFFFFF;
+  font-weight: 500;
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 2px 8px rgba(232, 83, 46, 0.22);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+}
+
+.failade-btn-primary:hover {
+  background: linear-gradient(180deg, #F5643D 0%, #D83E17 100%);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45), 0 4px 16px rgba(232, 83, 46, 0.32);
+}
+
+.failade-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(232, 83, 46, 0.2);
+}
+
+/* Secondary Button — Apple glass outline */
+.failade-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--accent);
+  border: 1px solid rgba(232, 83, 46, 0.3);
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.failade-btn-secondary:hover {
+  background: rgba(254, 242, 237, 0.9);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(232, 83, 46, 0.12);
+}
+
+.failade-btn-secondary:active {
+  transform: translateY(0);
+}
+
+/* Text Utilities */
+.failade-gradient-text {
+  color: var(--text-primary);
+}
+
+.failade-neon-text {
+  color: var(--accent);
+}
+
+/* Ambient background — subtle warm grid */
+.failade-bg-grid {
+  background-image: none;
+  background-color: var(--bg-app);
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-geist-mono), "JetBrains Mono", SFMono-Regular, Consolas, monospace !important;
+}
+
+/* Clean Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* React Flow Light Theme */
+.react-flow__renderer {
+  background: #FFFFFF !important;
+}
+.react-flow__background-pattern line {
+  stroke: #E5E7EB !important;
+}
+.react-flow__edge-path {
+  stroke: var(--accent) !important;
+  stroke-width: 2px !important;
+}
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--accent-hover) !important;
+  stroke-width: 2.5px !important;
+}
+.react-flow__controls {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid #E5E7EB !important;
+  background: #FFFFFF !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+.react-flow__controls-button {
+  background: #FFFFFF !important;
+  border-bottom: 1px solid #F3F4F6 !important;
+  fill: #6B7280 !important;
+  transition: all 0.15s ease;
+}
+.react-flow__controls-button:hover {
+  background: #FEF2ED !important;
+  fill: var(--accent) !important;
+}

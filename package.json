@@ -1,0 +1,23 @@
+{
+  "name": "digital-archaeologist",
+  "version": "1.0.0",
+  "description": "Digital Archaeologist — Intelligent legacy-code analysis and software maintenance platform",
+  "scripts": {
+    "start:backend": "npm --prefix backend run dev",
+    "start:frontend": "npm --prefix frontend run dev",
+    "build:backend": "npm --prefix backend run build",
+    "build:frontend": "npm --prefix frontend run build",
+    "build": "npm run build:backend && npm run build:frontend",
+    "analyze:demo": "python analysis-engine/analyzer.py demo-repo/legacy-payment-system"
+  },
+  "keywords": [
+    "software-maintenance",
+    "ast-analysis",
+    "code-intelligence",
+    "blast-radius",
+    "technical-debt",
+    "developer-tools"
+  ],
+  "author": "Digital Archaeologist Team",
+  "license": "MIT"
+}

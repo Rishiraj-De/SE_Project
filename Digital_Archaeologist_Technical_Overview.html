@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Digital Archaeologist — Technical Specification & Overview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  @page {
+    size: A4;
+    margin: 18mm 16mm 18mm 16mm;
+    @bottom-right {
+      content: counter(page);
+      font-size: 8pt;
+      font-family: 'JetBrains Mono', monospace;
+      color: #64748b;
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1e293b;
+    background-color: #ffffff;
+    line-height: 1.55;
+    font-size: 9.5pt;
+  }
+
+  /* Cover & Header */
+  .cover {
+    border-bottom: 2px solid #0f172a;
+    padding-bottom: 24px;
+    margin-bottom: 24px;
+  }
+
+  .badge-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 7.5pt;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 4px;
+  }
+
+  .badge-primary { background: #0f172a; color: #ffffff; }
+  .badge-tech { background: #e2e8f0; color: #334155; }
+  .badge-status { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+
+  h1 {
+    font-size: 24pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.8px;
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 11pt;
+    font-weight: 500;
+    color: #475569;
+    margin-bottom: 14px;
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 8pt;
+  }
+
+  .meta-item strong {
+    display: block;
+    color: #64748b;
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .meta-item span {
+    font-weight: 600;
+    color: #0f172a;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Section Styling */
+  .section {
+    margin-bottom: 22px;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+
+  h2 {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h2 .num {
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 8pt;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  h3 {
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: #1e293b;
+    margin-top: 10px;
+    margin-bottom: 4px;
+  }
+
+  p {
+    margin-bottom: 8px;
+    color: #334155;
+    text-align: justify;
+  }
+
+  /* Grid Layouts */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  /* Cards */
+  .card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+
+  .card-highlight {
+    background: #f8fafc;
+    border-left: 3px solid #0f172a;
+  }
+
+  .card-title {
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Callouts */
+  .callout {
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 8.5pt;
+    border-left: 3.5px solid;
+  }
+
+  .callout-info {
+    background: #f0fdf4;
+    border-color: #10b981;
+    color: #064e3b;
+  }
+
+  .callout-warn {
+    background: #fffbeb;
+    border-color: #f59e0b;
+    color: #78350f;
+  }
+
+  .callout-dark {
+    background: #0f172a;
+    border-color: #38bdf8;
+    color: #e2e8f0;
+  }
+  .callout-dark strong { color: #38bdf8; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+    font-size: 8pt;
+  }
+
+  th {
+    background: #0f172a;
+    color: #ffffff;
+    text-align: left;
+    padding: 6px 8px;
+    font-weight: 600;
+    font-size: 7.5pt;
+    letter-spacing: 0.3px;
+  }
+
+  td {
+    padding: 5.5px 8px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  /* Code & Syntax */
+  code, pre {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  code {
+    background: #f1f5f9;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 7.5pt;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+  }
+
+  pre {
+    background: #0f172a;
+    color: #f1f5f9;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 7.5pt;
+    line-height: 1.45;
+    overflow-x: hidden;
+    margin-bottom: 10px;
+    border: 1px solid #1e293b;
+  }
+
+  ul, ol {
+    margin-left: 18px;
+    margin-bottom: 8px;
+    color: #334155;
+  }
+
+  li {
+    margin-bottom: 3px;
+  }
+
+  .badge-crit { background: #fee2e2; color: #b91c1c; font-weight: 600; padding: 1px 5px; border-radius: 3px; }
+  .badge-high { background: #ffedd5; color: #c2410c; font-weight: 600; padding: 1px 5px; border-radius: 3px; }
+  .badge-med  { background: #fef3c7; color: #b45309; font-weight: 600; padding: 1px 5px; border-radius: 3px; }
+  .badge-low  { background: #e0f2fe; color: #0369a1; font-weight: 600; padding: 1px 5px; border-radius: 3px; }
+
+  .footer-note {
+    font-size: 7pt;
+    color: #94a3b8;
+    text-align: center;
+    margin-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 8px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+  <!-- COVER / HEADER -->
+  <div class="cover">
+    <div class="badge-row">
+      <span class="badge badge-primary">Technical Dossier</span>
+      <span class="badge badge-tech">v1.0.0 Architecture Spec</span>
+      <span class="badge badge-status">Active Enterprise Stack</span>
+    </div>
+    <h1>Digital Archaeologist</h1>
+    <div class="subtitle">Intelligent Legacy Codebase Analysis, AST Intelligence &amp; Software Maintenance Platform</div>
+    
+    <div class="meta-grid">
+      <div class="meta-item">
+        <strong>Domain</strong>
+        <span>Software Engineering / Maintenance</span>
+      </div>
+      <div class="meta-item">
+        <strong>Frontend</strong>
+        <span>Next.js 16 • React 19 • Tailwind 4</span>
+      </div>
+      <div class="meta-item">
+        <strong>Backend &amp; DB</strong>
+        <span>Node.js / Express • SQLite • Prisma</span>
+      </div>
+      <div class="meta-item">
+        <strong>Analysis Engine</strong>
+        <span>Python 3.13 • Git AST Forensics</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 1: EXECUTIVE SUMMARY & VISION -->
+  <div class="section">
+    <h2><span class="num">01</span> Executive Overview &amp; Project Philosophy</h2>
+    <p>
+      <strong>"Understand existing software before changing it."</strong> In enterprise software engineering, between 60% and 80% of total lifecycle costs are expended on software maintenance, legacy onboarding, refactoring, and bug investigations. When senior engineers inherit multi-year repositories, they face steep cognitive hurdles: missing documentation, undocumented circular dependencies, hidden blast radiuses, volatile files (churn hotspots), and stale dead code.
+    </p>
+    <p>
+      Unlike generic AI tools that hallucinate high-level summaries without grounding, <strong>Digital Archaeologist</strong> provides a deterministic, AST-driven forensic platform. It reconstructs architectural topologies, measures cyclomatic complexity and Git churn velocity, detects dependency cycles via directed graph algorithms, and calculates transitive blast radiuses before a single line of code is edited.
+    </p>
+
+    <div class="grid-3 avoid-break">
+      <div class="card card-highlight">
+        <div class="card-title">Deterministic AST Engine</div>
+        <p style="font-size: 7.5pt; margin-bottom: 0;">Multi-language parser extracting classes, methods, imports, and branch complexity without running unreliable test runners.</p>
+      </div>
+      <div class="card card-highlight">
+        <div class="card-title">Transitive Blast Radius</div>
+        <p style="font-size: 7.5pt; margin-bottom: 0;">Calculates upstream and downstream dependency ripple effects, SQL write impacts, and third-party gateway vulnerabilities.</p>
+      </div>
+      <div class="card card-highlight">
+        <div class="card-title">Grounded AI Explanations</div>
+        <p style="font-size: 7.5pt; margin-bottom: 0;">Contextual AI assistant that accompanies every answer with verified file paths, line numbers, snippets, and Git commit hashes.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: SYSTEM ARCHITECTURE & TOPOLOGY -->
+  <div class="section avoid-break">
+    <h2><span class="num">02</span> High-Level System Architecture &amp; Data Pipeline</h2>
+    <p>Digital Archaeologist operates as a cohesive, 3-tier hybrid architecture backed by a persistent relational database:</p>
+
+    <div class="callout callout-dark">
+      <strong>Pipeline Orchestration Flow:</strong><br>
+      Target Repository Ingestion &rarr; Git History Scanner &rarr; Python AST Tokenizer &rarr; Directed Dependency Adjacency Graph &rarr; DFS Cycle Detector &rarr; Churn vs Complexity Matrix &rarr; Prisma / SQLite Storage &rarr; RESTful API &rarr; Real-time Next.js Developer Workspaces
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Technologies</th>
+          <th>Responsibilities</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Tier 1: Presentation</strong></td>
+          <td>Next.js 16.3, React 19, Monaco Editor, React Flow (@xyflow/react), Recharts, Tailwind CSS v4</td>
+          <td>High-density developer dashboard, interactive graph canvas, VS-Code inspired 3-pane codebase explorer, scatter matrix, citation inspector.</td>
+        </tr>
+        <tr>
+          <td><strong>Tier 2: API &amp; Orchestration</strong></td>
+          <td>Node.js, Express 4.19, TypeScript 5.5, Prisma ORM 6.19, tsx</td>
+          <td>RESTful gateway, subprocess runner for the Python engine, impact analysis calculations, AST-grounded local AI service, reporting generator.</td>
+        </tr>
+        <tr>
+          <td><strong>Tier 3: Analysis Engine</strong></td>
+          <td>Python 3.13, Regex AST Tokenizer, Git CLI Subprocess, Graph Adjacency</td>
+          <td>Multi-language source parsing, cyclomatic complexity counter, DFS cycle detection, Git commit &amp; file volatility (churn) mining.</td>
+        </tr>
+        <tr>
+          <td><strong>Storage Tier</strong></td>
+          <td>SQLite, Prisma Client with 15 Relational Models</td>
+          <td>Normalized storage of analysis runs, file metadata, function &amp; class definitions, dependencies, technical debt findings, and commit logs.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- SECTION 3: PYTHON ANALYSIS ENGINE DEEP DIVE -->
+  <div class="section">
+    <h2><span class="num">03</span> Deep Dive: Python AST &amp; Forensic Engine (<code>analyzer.py</code>)</h2>
+    <p>
+      The core analysis engine located at <code>analysis-engine/analyzer.py</code> is a lightweight, zero-dependency Python script designed for maximum execution speed across heterogeneous codebases (TypeScript, JavaScript, Python, Java, Go, Rust).
+    </p>
+
+    <h3>1. Cyclomatic Complexity Calculation</h3>
+    <p>
+      Computes the number of linearly independent paths through program source code using McCabe's formulation based on decision points:
+    </p>
+    <pre><code># Decision patterns extracted by regex:
+patterns = [
+    r'\bif\b', r'\belse\s+if\b', r'\belif\b', r'\bfor\b', r'\bwhile\b',
+    r'\bcase\b', r'\bcatch\b', r'\bexcept\b', r'\b\?\s*[^:]+:', r'&&', r'\|\|'
+]
+complexity = 1 + sum(len(re.findall(p, content)) for p in patterns)</code></pre>
+
+    <h3>2. Directed Adjacency Graph &amp; DFS Cycle Detection</h3>
+    <p>
+      Constructs both forward adjacency (<code>adjacency[u] &rarr; v</code>, meaning <code>u</code> depends on <code>v</code>) and reverse adjacency (<code>rev_adjacency[v] &rarr; u</code>, meaning <code>u</code> is a dependent of <code>v</code>). Circular dependencies are isolated via Depth-First Search with a three-color recursion stack:
+    </p>
+    <ul>
+      <li><strong>0 (Unvisited):</strong> Node has not been touched.</li>
+      <li><strong>1 (Visiting):</strong> Node is on the active traversal path. If an adjacent node has state <code>1</code>, a circular dependency cycle is detected.</li>
+      <li><strong>2 (Visited):</strong> Node and all reachable subtrees are completely analyzed.</li>
+    </ul>
+
+    <h3>3. Git Forensics &amp; Churn Dynamics</h3>
+    <p>
+      Extracts repository commit history and file volatility using direct Git CLI bindings:
+      <code>git log --pretty=format:%h|%an|%ad|%s</code> and <code>git log --name-only</code>. Files with high historical modification frequency are flagged as high-churn candidates.
+    </p>
+
+    <h3>4. Mathematical Composite Health Score</h3>
+    <p>
+      The overall Engineering Health Index (0–100) is synthesized using a multi-factor weighted equation:
+    </p>
+    <pre><code>Health Score = round(
+    (ArchitectureScore * 0.25) +
+    (MaintainabilityScore * 0.25) +
+    (TestCoverageScore * 0.20) +
+    (DependencyHealthScore * 0.20) +
+    (DocumentationScore * 0.10)
+)
+Where:
+- ArchitectureScore = max(20, 100 - (circular_count * 15) - (high_coupling_modules * 5))
+- MaintainabilityScore = max(20, round(100 - (avg_cyclomatic_complexity * 3)))
+- TestCoverageScore = min(100, round((test_files / total_files) * 300))
+- DocumentationScore = min(100, round(20 + (doc_files * 15)))
+- DependencyHealthScore = max(20, 100 - (technical_debt_items * 4))</code></pre>
+  </div>
+
+  <!-- SECTION 4: BACKEND REST API & SERVICE ARCHITECTURE -->
+  <div class="section avoid-break">
+    <h2><span class="num">04</span> Backend Architecture &amp; RESTful API Endpoints</h2>
+    <p>
+      The Express TypeScript server (<code>backend/src/server.ts</code>) serves port <code>5000</code>, handling lifecycle actions, file browsing, impact analysis, and grounded AI queries:
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Endpoint</th>
+          <th>Controller &amp; Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>POST</code></td>
+          <td><code>/api/analyze</code></td>
+          <td>Starts repository analysis pipeline (Git clone / local scan / Python engine invocation).</td>
+        </tr>
+        <tr>
+          <td><code>GET</code></td>
+          <td><code>/api/analysis/status</code></td>
+          <td>Polls active pipeline stage (Cloning &rarr; AST &rarr; Graph &rarr; Churn &rarr; Completed).</td>
+        </tr>
+        <tr>
+          <td><code>GET</code></td>
+          <td><code>/api/repos/:id/overview</code></td>
+          <td>Returns high-level metric lines, health index breakdown, and immediate attention alerts.</td>
+        </tr>
+        <tr>
+          <td><code>GET</code></td>
+          <td><code>/api/repos/:id/architecture</code></td>
+          <td>Generates React Flow node/edge graph with circular dependency highlights and module roles.</td>
+        </tr>
+        <tr>
+          <td><code>GET</code></td>
+          <td><code>/api/repos/:id/dependencies</code></td>
+          <td>Returns fan-in (dependents), fan-out (depends-on), and circular loops table.</td>
+        </tr>
+        <tr>
+          <td><code>GET</code></td>
+          <td><code>/api/repos/:id/files</code></td>
+          <td>Full directory tree hierarchy with LOC, language, complexity, and symbols.</td>
+        </tr>
+        <tr>
+          <td><code>GET</code></td>
+          <td><code>/api/repos/:id/file-content</code></td>
+          <td>Returns raw file contents for Monaco Editor with line metrics and symbol maps.</td>
+        </tr>
+        <tr>
+          <td><code>GET</code></td>
+          <td><code>/api/repos/:id/git-history</code></td>
+          <td>Commit logs, author distributions, and most volatile files (churn ranking).</td>
+        </tr>
+        <tr>
+          <td><code>GET</code></td>
+          <td><code>/api/repos/:id/tech-debt</code></td>
+          <td>Categorized debt inventory (Complexity, Dead Code, Security/MD5, Circular Loops).</td>
+        </tr>
+        <tr>
+          <td><code>GET</code></td>
+          <td><code>/api/repos/:id/risk-analysis</code></td>
+          <td>Scatter plot data points mapping Change Frequency (X) vs Cyclomatic Complexity (Y).</td>
+        </tr>
+        <tr>
+          <td><code>POST</code></td>
+          <td><code>/api/repos/:id/impact-analysis</code></td>
+          <td>Calculates transitive blast radius, database write operations, and call hierarchy tree.</td>
+        </tr>
+        <tr>
+          <td><code>POST</code></td>
+          <td><code>/api/repos/:id/ai/query</code></td>
+          <td>Deterministic AI responses with file paths, line ranges, code snippets, and commit hashes.</td>
+        </tr>
+        <tr>
+          <td><code>POST</code></td>
+          <td><code>/api/repos/:id/docs/generate</code></td>
+          <td>Generates structured Markdown documentation and architectural audit reports.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- SECTION 5: STATIC BLAST RADIUS & IMPACT ANALYSIS -->
+  <div class="section">
+    <h2><span class="num">05</span> Static Blast Radius &amp; Transitive Impact Analysis</h2>
+    <p>
+      Implemented in <code>backend/src/services/impact.service.ts</code>, this subsystem solves the classic developer dilemma: <em>"If I modify function X, what breaks across the rest of the application?"</em>
+    </p>
+
+    <div class="grid-2 avoid-break">
+      <div class="card card-highlight">
+        <div class="card-title">Downstream &amp; Upstream Traversal</div>
+        <p style="font-size: 8pt;">
+          Traverses the reverse adjacency graph to discover direct and transitive callers. If <code>PaymentService.processPayment()</code> is modified, the service discovers that <code>CheckoutController</code>, <code>TransactionService</code>, and <code>NotificationService</code> are impacted.
+        </p>
+      </div>
+      <div class="card card-highlight">
+        <div class="card-title">Side-Effect &amp; Infrastructure Risk</div>
+        <p style="font-size: 8pt;">
+          Scans call paths for database write operations (e.g., <code>DatabaseConnector.executeWrite()</code>) and external third-party gateway interactions (Stripe, PayPal, banking APIs) to establish risk ratings (<span class="badge-crit">CRITICAL</span>, <span class="badge-high">HIGH</span>, <span class="badge-med">MEDIUM</span>, <span class="badge-low">LOW</span>).
+        </p>
+      </div>
+    </div>
+
+    <h3>Impact Output Schema</h3>
+    <pre><code>interface BlastRadiusResult {
+  targetSymbol: string;
+  targetFile: string;
+  affectedModules: string[];
+  affectedFunctions: string[];
+  databaseOperations: number;
+  externalApis: number;
+  riskRating: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+  confidence: "High (Static AST)" | "Requires Verification";
+  callHierarchy: {
+    name: string;
+    type: "root" | "caller" | "dependency";
+    file: string;
+    children: CallNode[];
+  };
+  reasoning: string[];
+}</code></pre>
+  </div>
+
+  <!-- SECTION 6: PRISMA DATABASE RELATIONAL SCHEMA -->
+  <div class="section avoid-break">
+    <h2><span class="num">06</span> Relational Database Schema (Prisma / SQLite)</h2>
+    <p>
+      The persistent database model defined in <code>backend/prisma/schema.prisma</code> incorporates 15 normalized tables ensuring comprehensive auditability:
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Primary Attributes</th>
+          <th>Relationships &amp; Cascade Rules</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Repository</code></td>
+          <td><code>id, name, url, defaultBranch, ownerId</code></td>
+          <td>1-to-many with AnalysisRun, Contributor, Commit, Documentation, AISession.</td>
+        </tr>
+        <tr>
+          <td><code>AnalysisRun</code></td>
+          <td><code>id, branch, commitHash, status, healthScore, archScore</code></td>
+          <td>Belongs to Repository (Cascade). 1-to-many with File, Dependency, TechDebt, RiskScore.</td>
+        </tr>
+        <tr>
+          <td><code>File</code></td>
+          <td><code>id, path, name, extension, language, loc, complexity</code></td>
+          <td>Belongs to AnalysisRun. 1-to-many with ClassDefinition, FunctionDefinition, Dependencies.</td>
+        </tr>
+        <tr>
+          <td><code>Dependency</code></td>
+          <td><code>id, fromFileId, toFileId, importStatement, isCircular</code></td>
+          <td>Relates source file to target file. Supports graph reconstruction and coupling queries.</td>
+        </tr>
+        <tr>
+          <td><code>TechnicalDebt</code></td>
+          <td><code>id, severity, component, file, issue, category, recommendation</code></td>
+          <td>Structured audit log tracking complexity hotspots, dead code, and security alerts.</td>
+        </tr>
+        <tr>
+          <td><code>RiskScore</code></td>
+          <td><code>id, fileId, complexity, changeFrequency, riskScore, riskLevel</code></td>
+          <td>Synthesizes Git commit frequency with cyclomatic complexity.</td>
+        </tr>
+        <tr>
+          <td><code>Commit</code></td>
+          <td><code>id, hash, author, message, timestamp, linesAdded, linesDeleted</code></td>
+          <td>Stores full historical repository commits and file churn changes.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- SECTION 7: FRONTEND USER EXPERIENCE & VIEWS -->
+  <div class="section">
+    <h2><span class="num">07</span> Frontend Architecture &amp; User Experience</h2>
+    <p>
+      The frontend uses Next.js 16.3 with React 19, styled with an editorial slate developer aesthetic. Every view is built for high information density without unnecessary decorative fluff:
+    </p>
+
+    <div class="grid-2 avoid-break">
+      <div class="card">
+        <div class="card-title">1. Executive Overview (<code>OverviewView.tsx</code>)</div>
+        <p style="font-size: 7.5pt;">Metric ribbon (LOC, Files, Commits), composite 68/100 Engineering Health Index with progress bars, Immediate Attention banner highlighting circular loops and security deprecations.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">2. Architecture Canvas (<code>ArchitectureView.tsx</code>)</div>
+        <p style="font-size: 7.5pt;">Interactive React Flow graph with custom service nodes, animated circular dependency edges, role filters (Services, Controllers, Repositories, Database), and node inspector drawer.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">3. Dependencies Explorer (<code>DependenciesView.tsx</code>)</div>
+        <p style="font-size: 7.5pt;">Comprehensive coupling matrix displaying fan-in (dependents), fan-out (depends-on), and circular loops to expose architectural single points of failure.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">4. Codebase Explorer (<code>CodebaseView.tsx</code>)</div>
+        <p style="font-size: 7.5pt;">VS-Code inspired 3-pane layout: Directory tree, full Monaco Editor with syntax highlighting and minimap, and AST symbol inspector with direct Blast Radius triggers.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">5. Git Churn Dynamics (<code>GitHistoryView.tsx</code>)</div>
+        <p style="font-size: 7.5pt;">Milestone timeline (2021–2024), most volatile files ranking (change frequency), and full commit logs with author signatures and hashes.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">6. Technical Debt Catalog (<code>TechDebtView.tsx</code>)</div>
+        <p style="font-size: 7.5pt;">Filterable table classifying debt into Complexity, Circular Dependencies, Dead Code, and Security vulnerabilities with actionable remediation plans.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">7. Risk Matrix (<code>RiskAnalysisView.tsx</code>)</div>
+        <p style="font-size: 7.5pt;">Interactive Recharts scatter plot charting Change Frequency (X-axis) against Cyclomatic Complexity (Y-axis). Accurately isolates the Critical Hotspot quadrant.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">8. Contextual AI Assistant (<code>AIAssistantView.tsx</code>)</div>
+        <p style="font-size: 7.5pt;">3-column layout: Active Index Context, conversation thread, and verified Citation Inspector citing file lines, snippets, and Git hashes.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 8: CASE STUDY: BUNDLED DEMO REPOSITORY -->
+  <div class="section avoid-break">
+    <h2><span class="num">08</span> Bundled Legacy Codebase: <code>legacy-payment-system</code></h2>
+    <p>
+      To ensure realistic demonstration out of the box, the project bundles a realistic production-like legacy TypeScript codebase at <code>demo-repo/legacy-payment-system</code> illustrating canonical architectural anti-patterns:
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>File Path</th>
+          <th>Anti-Pattern &amp; Architectural Finding</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>PaymentService</code></td>
+          <td><code>src/payment/PaymentService.ts</code></td>
+          <td><span class="badge-crit">CRITICAL</span> Cyclomatic Complexity 18; nested gateway branches; circular import to <code>TransactionService</code>; direct Singleton coupling.</td>
+        </tr>
+        <tr>
+          <td><code>TransactionService</code></td>
+          <td><code>src/payment/TransactionService.ts</code></td>
+          <td><span class="badge-high">HIGH</span> Reciprocal dependency: imports <code>PaymentService</code> to invoke <code>refundPayment</code>, completing circular loop.</td>
+        </tr>
+        <tr>
+          <td><code>AuthController</code></td>
+          <td><code>src/auth/AuthController.ts</code></td>
+          <td><span class="badge-high">HIGH</span> Zero test coverage; imports deprecated legacy MD5 encryption routine for password verification.</td>
+        </tr>
+        <tr>
+          <td><code>DatabaseConnector</code></td>
+          <td><code>src/database/DatabaseConnector.ts</code></td>
+          <td><span class="badge-med">MEDIUM</span> Global Singleton architectural hub with 6 direct dependents; high blast radius on connection failure.</td>
+        </tr>
+        <tr>
+          <td><code>LegacyCryptoUtils</code></td>
+          <td><code>src/utils/LegacyCryptoUtils.ts</code></td>
+          <td><span class="badge-med">MEDIUM</span> Dead code candidates (<code>unused_rot13_obfuscate</code>, <code>legacy_xor_cipher</code>); insecure MD5 implementation.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SECTION 9: RUN & DEPLOYMENT INSTRUCTIONS -->
+  <div class="section avoid-break">
+    <h2><span class="num">09</span> Execution &amp; Developer Operations Guide</h2>
+    
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Backend Service (Port 5000)</div>
+        <pre><code>cd backend
+npm install
+npm run dev
+
+# API available at: http://localhost:5000/api
+# Health check:     http://localhost:5000/api/health</code></pre>
+      </div>
+      <div class="card">
+        <div class="card-title">Frontend Next.js App (Port 3000)</div>
+        <pre><code>cd frontend
+npm install
+npm run dev
+
+# Web Application: http://localhost:3000</code></pre>
+      </div>
+    </div>
+
+    <div class="card card-highlight">
+      <div class="card-title">Direct Python Analysis Execution</div>
+      <pre><code># Run standalone engine on the bundled demo repository:
+python analysis-engine/analyzer.py demo-repo/legacy-payment-system
+
+# Or run via root package.json shortcut:
+npm run analyze:demo</code></pre>
+    </div>
+
+    <div class="footer-note">
+      Digital Archaeologist Engineering Platform • Confidential Technical Documentation • Built with Next.js, Express, Python &amp; Prisma
+    </div>
+  </div>
+
+</body>
+</html>

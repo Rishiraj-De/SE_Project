@@ -1,0 +1,309 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. Users
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  role         String        @default("engineer")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  repositories Repository[]
+  aiSessions   AISession[]
+
+  @@map("users")
+}
+
+// 2. Repositories
+model Repository {
+  id             String          @id @default(cuid())
+  name           String
+  url            String
+  defaultBranch  String          @default("main")
+  ownerId        String?
+  owner          User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  analysisRuns   AnalysisRun[]
+  contributors   Contributor[]
+  commits        Commit[]
+  documentation  Documentation[]
+  aiSessions     AISession[]
+
+  @@index([url])
+  @@index([ownerId])
+  @@map("repositories")
+}
+
+// 3. Analysis Runs
+model AnalysisRun {
+  id                    String          @id @default(cuid())
+  repositoryId          String
+  repository            Repository      @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  branch                String          @default("main")
+  commitHash            String?
+  status                String          @default("completed")
+  healthScore           Int             @default(68)
+  architectureScore     Int             @default(72)
+  maintainabilityScore  Int             @default(61)
+  testCoverageScore     Int             @default(43)
+  documentationScore    Int             @default(28)
+  dependencyHealthScore Int             @default(74)
+  totalLoc              Int             @default(0)
+  filesCount            Int             @default(0)
+  startedAt             DateTime        @default(now())
+  completedAt           DateTime?
+  files                 File[]
+  dependencies          Dependency[]
+  technicalDebt         TechnicalDebt[]
+  riskScores            RiskScore[]
+  codeMetrics           CodeMetric[]
+
+  @@index([repositoryId])
+  @@index([status])
+  @@map("analysis_runs")
+}
+
+// 4. Files
+model File {
+  id               String               @id @default(cuid())
+  analysisRunId    String
+  analysisRun      AnalysisRun          @relation(fields: [analysisRunId], references: [id], onDelete: Cascade)
+  path             String
+  name             String
+  extension        String?
+  language         String
+  loc              Int                  @default(0)
+  complexity       Int                  @default(1)
+  createdAt        DateTime             @default(now())
+  classes          ClassDefinition[]
+  functions        FunctionDefinition[]
+  codeMetrics      CodeMetric[]
+  riskScores       RiskScore[]
+  dependenciesFrom Dependency[]         @relation("FromModule")
+  dependenciesTo   Dependency[]         @relation("ToModule")
+  commitChanges    CommitChange[]
+
+  @@index([analysisRunId, path])
+  @@index([path])
+  @@map("files")
+}
+
+// 5. Classes
+model ClassDefinition {
+  id         String   @id @default(cuid())
+  fileId     String
+  file       File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  name       String
+  line       Int
+  endLine    Int?
+  isExported Boolean  @default(true)
+
+  @@index([fileId])
+  @@index([name])
+  @@map("classes")
+}
+
+// 6. Functions
+model FunctionDefinition {
+  id         String   @id @default(cuid())
+  fileId     String
+  file       File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  name       String
+  line       Int
+  endLine    Int?
+  complexity Int      @default(1)
+  isAsync    Boolean  @default(false)
+  isExported Boolean  @default(true)
+  callers    String?
+
+  @@index([fileId])
+  @@index([name])
+  @@map("functions")
+}
+
+// 7. Dependencies
+model Dependency {
+  id             String       @id @default(cuid())
+  analysisRunId  String
+  analysisRun    AnalysisRun  @relation(fields: [analysisRunId], references: [id], onDelete: Cascade)
+  fromFileId     String?
+  fromFile       File?        @relation("FromModule", fields: [fromFileId], references: [id], onDelete: Cascade)
+  toFileId       String?
+  toFile         File?        @relation("ToModule", fields: [toFileId], references: [id], onDelete: Cascade)
+  fromModuleName String
+  toModuleName   String
+  isCircular     Boolean      @default(false)
+  cycleChain     String?
+  dependencyType String       @default("import")
+
+  @@index([analysisRunId])
+  @@index([fromModuleName, toModuleName])
+  @@index([isCircular])
+  @@map("dependencies")
+}
+
+// 8. Commits
+model Commit {
+  id           String         @id @default(cuid())
+  repositoryId String
+  repository   Repository     @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  hash         String
+  authorName   String
+  authorEmail  String?
+  message      String
+  committedAt  DateTime
+  changes      CommitChange[]
+
+  @@index([repositoryId, hash])
+  @@index([committedAt])
+  @@map("commits")
+}
+
+// 9. Commit Changes
+model CommitChange {
+  id         String   @id @default(cuid())
+  commitId   String
+  commit     Commit   @relation(fields: [commitId], references: [id], onDelete: Cascade)
+  fileId     String?
+  file       File?    @relation(fields: [fileId], references: [id], onDelete: SetNull)
+  filePath   String
+  insertions Int      @default(0)
+  deletions  Int      @default(0)
+  changeType String   @default("MODIFY")
+
+  @@index([commitId])
+  @@index([filePath])
+  @@map("commit_changes")
+}
+
+// 10. Contributors
+model Contributor {
+  id            String     @id @default(cuid())
+  repositoryId  String
+  repository    Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  name          String
+  email         String?
+  commitsCount  Int        @default(1)
+  firstCommitAt DateTime?
+  lastCommitAt  DateTime?
+
+  @@index([repositoryId])
+  @@index([email])
+  @@map("contributors")
+}
+
+// 11. Code Metrics
+model CodeMetric {
+  id            String      @id @default(cuid())
+  analysisRunId String
+  analysisRun   AnalysisRun @relation(fields: [analysisRunId], references: [id], onDelete: Cascade)
+  fileId        String?
+  file          File?       @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  metricType    String
+  numericValue  Float
+  metadata      String?
+  createdAt     DateTime    @default(now())
+
+  @@index([analysisRunId])
+  @@index([fileId, metricType])
+  @@map("code_metrics")
+}
+
+// 12. Technical Debt
+model TechnicalDebt {
+  id             String      @id @default(cuid())
+  analysisRunId  String
+  analysisRun    AnalysisRun @relation(fields: [analysisRunId], references: [id], onDelete: Cascade)
+  severity       String
+  category       String
+  component      String
+  file           String
+  issue          String
+  recommendation String
+  remediated     Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+
+  @@index([analysisRunId])
+  @@index([severity])
+  @@index([category])
+  @@map("technical_debt")
+}
+
+// 13. Risk Scores
+model RiskScore {
+  id              String      @id @default(cuid())
+  analysisRunId   String
+  analysisRun     AnalysisRun @relation(fields: [analysisRunId], references: [id], onDelete: Cascade)
+  fileId          String?
+  file            File?       @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  component       String
+  path            String
+  complexity      Int
+  changeFrequency Int
+  riskLevel       String
+  riskScore       Float
+  quadrant        String
+  createdAt       DateTime    @default(now())
+
+  @@index([analysisRunId])
+  @@index([riskLevel])
+  @@index([path])
+  @@map("risk_scores")
+}
+
+// 14. AI Sessions
+model AISession {
+  id           String       @id @default(cuid())
+  userId       String?
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  repositoryId String?
+  repository   Repository?  @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  title        String       @default("Contextual Exploration")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  messages     AIMessage[]
+
+  @@index([repositoryId])
+  @@index([userId])
+  @@map("ai_sessions")
+}
+
+// 15. AI Messages
+model AIMessage {
+  id            String    @id @default(cuid())
+  sessionId     String
+  session       AISession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role          String
+  content       String
+  citationsJson String?
+  createdAt     DateTime  @default(now())
+
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("ai_messages")
+}
+
+// 16. Documentation
+model Documentation {
+  id              String     @id @default(cuid())
+  repositoryId    String
+  repository      Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  title           String
+  scope           String
+  moduleName      String?
+  contentMarkdown String
+  generatedAt     DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([repositoryId])
+  @@index([scope, moduleName])
+  @@map("documentation")
+}
