@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { RefreshCw, Download, Sun, Moon, ChevronRight, ShieldCheck, ShieldAlert, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { RefreshCw, Download, Sun, Moon, ChevronRight, ShieldCheck, ShieldAlert, PanelLeftClose, PanelLeftOpen, LogOut, User } from "lucide-react";
+import { AuthenticatedUser } from "@/lib/types";
 
 interface HeaderProps {
   repoName?: string;
@@ -16,10 +17,12 @@ interface HeaderProps {
   onGoLanding?: () => void;
   isSidebarOpen?: boolean;
   onToggleSidebar?: () => void;
+  currentUser?: AuthenticatedUser | null;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  repoName = "legacy-payment-system",
+  repoName = "original-repository",
   branch = "main",
   analyzedAt,
   healthScore = 68,
@@ -30,7 +33,9 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTheme,
   onGoLanding,
   isSidebarOpen = true,
-  onToggleSidebar
+  onToggleSidebar,
+  currentUser,
+  onLogout
 }) => {
   const isHealthy = healthScore >= 75;
 
@@ -74,6 +79,24 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Actions */}
       <div className="flex items-center gap-2.5">
+        {currentUser && (
+          <div className="hidden sm:flex items-center gap-2 bg-[#FAF9F7] border border-gray-200 rounded-xl px-2.5 py-1 text-xs text-gray-700 shadow-2xs">
+            <div className="w-5 h-5 rounded-full bg-[#E8532E] text-white flex items-center justify-center text-[10px] font-bold">
+              {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
+            </div>
+            <span className="font-medium truncate max-w-[100px]">{currentUser.name}</span>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                title="Sign out"
+                className="text-gray-400 hover:text-red-500 p-0.5"
+              >
+                <LogOut className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        )}
+
         {onGoLanding && (
           <button
             onClick={onGoLanding}

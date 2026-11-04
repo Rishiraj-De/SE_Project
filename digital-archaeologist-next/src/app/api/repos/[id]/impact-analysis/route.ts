@@ -6,13 +6,16 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { targetSymbol, targetFile } = body;
-
     const store = AnalysisStore.getInstance();
     const analysis = store.getCurrentAnalysis();
 
-    const result = ImpactService.analyzeImpact(analysis, targetSymbol || "PaymentService.processPayment()", targetFile || "");
+    if (!analysis) {
+      return NextResponse.json({ error: "No active analysis found." }, { status: 404 });
+    }
+
+    const result = ImpactService.analyzeImpact(analysis, targetSymbol, targetFile);
     return NextResponse.json(result);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Failed to analyze impact" }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Failed to calculate blast radius" }, { status: 500 });
   }
 }

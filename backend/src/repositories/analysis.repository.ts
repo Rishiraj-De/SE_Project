@@ -7,18 +7,34 @@ export class AnalysisRepository {
    * repositories, analysis_runs, files, classes, functions, dependencies,
    * commits, contributors, code_metrics, technical_debt, risk_scores
    */
-  public static async saveAnalysisRun(analysis: AnalysisResult) {
+  public static async saveAnalysisRun(analysis: AnalysisResult, userEmail?: string) {
     try {
-      // 1. Ensure default engineer user exists
-      const user = await prisma.user.upsert({
-        where: { email: "alex.engineer@internal" },
-        update: {},
-        create: {
-          email: "alex.engineer@internal",
-          name: "Alex Engineer",
-          role: "lead_architect"
+      // 1. Find or associate with authenticated user
+      let user;
+      if (userEmail) {
+        user = await prisma.user.upsert({
+          where: { email: userEmail.toLowerCase().trim() },
+          update: {},
+          create: {
+            email: userEmail.toLowerCase().trim(),
+            name: userEmail.split("@")[0],
+            role: "engineer"
+          }
+        });
+      } else {
+        user = await prisma.user.findFirst({
+          orderBy: { createdAt: "desc" }
+        });
+        if (!user) {
+          user = await prisma.user.create({
+            data: {
+              email: "engineer@archaeologist.internal",
+              name: "Lead Engineer",
+              role: "engineer"
+            }
+          });
         }
-      });
+      }
 
       // 2. Upsert Repository
       const repo = await prisma.repository.upsert({

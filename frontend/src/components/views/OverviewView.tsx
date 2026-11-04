@@ -15,7 +15,8 @@ import {
   Box,
   CheckCircle2,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Wrench
 } from "lucide-react";
 
 interface OverviewViewProps {
@@ -122,8 +123,15 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ analysis, onNavigate
         </div>
         <div className="flex items-center gap-2.5">
           <button
-            onClick={() => onNavigateTab("impact")}
+            onClick={() => onNavigateTab("modernization")}
             className="failade-btn-primary text-xs"
+          >
+            <Wrench className="w-3.5 h-3.5" />
+            <span>Refactor Studio</span>
+          </button>
+          <button
+            onClick={() => onNavigateTab("impact")}
+            className="failade-btn-secondary text-xs"
           >
             <Zap className="w-3.5 h-3.5" />
             <span>Impact Analysis</span>
@@ -136,6 +144,28 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ analysis, onNavigate
             <span>View Architecture</span>
           </button>
         </div>
+      </div>
+
+      {/* Interactive Modernization Banner */}
+      <div className="bg-gradient-to-r from-orange-500 via-[#E8532E] to-amber-600 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[11px] font-semibold tracking-wide backdrop-blur-sm">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>NEW ARCHITECTURAL CAPABILITY</span>
+          </div>
+          <h3 className="text-base font-bold">Refactor &amp; Modernization Studio</h3>
+          <p className="text-xs text-white/90 max-w-xl leading-relaxed">
+            Automated refactoring recipes with side-by-side codemods, Martin Fowler design patterns, and real-time ROI simulation to boost system health.
+          </p>
+        </div>
+        <button
+          onClick={() => onNavigateTab("modernization")}
+          className="px-4 py-2.5 rounded-xl bg-white text-gray-900 hover:bg-orange-50 font-bold text-xs transition-all flex items-center gap-2 shadow-sm shrink-0 cursor-pointer"
+        >
+          <Wrench className="w-3.5 h-3.5 text-[#E8532E]" />
+          <span>Launch Refactor Studio</span>
+          <ArrowRight className="w-3 h-3 text-gray-400" />
+        </button>
       </div>
 
       {/* Metric Cards with Spring Physics & Tickers */}

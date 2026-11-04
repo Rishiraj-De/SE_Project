@@ -16,7 +16,8 @@ import {
   FolderGit2,
   Star,
   Plus,
-  PanelLeftClose
+  PanelLeftClose,
+  Wrench
 } from "lucide-react";
 
 export type NavTab =
@@ -28,6 +29,7 @@ export type NavTab =
   | "tech-debt"
   | "risk"
   | "impact"
+  | "modernization"
   | "assistant"
   | "reports"
   | "settings";
@@ -46,7 +48,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onSelectTab,
-  repoName = "legacy-payment-system",
+  repoName = "original-repository",
   branch = "main",
   onOpenImport,
   onGoLanding,
@@ -65,6 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: "tech-debt", label: "Technical Debt", icon: <AlertTriangle className="w-4 h-4" /> },
     { id: "risk", label: "Risk Analysis", icon: <Flame className="w-4 h-4" /> },
     { id: "impact", label: "Impact Analysis", icon: <Zap className="w-4 h-4" /> },
+    { id: "modernization", label: "Refactor Studio", icon: <Wrench className="w-4 h-4" />, badge: "NEW" },
     { id: "assistant", label: "AI Investigator", icon: <Bot className="w-4 h-4" /> }
   ];
 

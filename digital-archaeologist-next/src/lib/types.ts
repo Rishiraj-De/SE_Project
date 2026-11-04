@@ -52,6 +52,26 @@ export interface TechnicalDebtItem {
   recommendation: string;
 }
 
+export interface RefactoringRecipe {
+  id: string;
+  title: string;
+  component: string;
+  filePath: string;
+  pattern: string;
+  quadrant: "quick-win" | "architectural" | "security" | "maintenance";
+  category: "Decoupling" | "Security" | "Refactoring" | "Async & Performance";
+  severity: Severity;
+  effortHours: number;
+  healthImpact: number;
+  blastRadiusReduction: number;
+  description: string;
+  architecturalRationale: string;
+  legacyCode: string;
+  modernCode: string;
+  unifiedDiff: string;
+  verificationPlan: string[];
+}
+
 export interface RiskPoint {
   id: string;
   name: string;
@@ -142,3 +162,16 @@ export interface AIResponse {
   citations: AICitation[];
   suggestedFollowUps: string[];
 }
+
+export type AuthProvider = "google" | "apple" | "email";
+
+export interface AuthenticatedUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  provider: AuthProvider;
+  createdAt?: string;
+  updatedAt?: string;
+}
+

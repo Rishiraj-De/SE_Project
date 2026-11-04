@@ -6,9 +6,9 @@ import { AIService } from "../services/ai.service";
 export class RepositoryController {
   public static async analyze(req: Request, res: Response) {
     try {
-      const { repoUrl, repoName } = req.body;
+      const { repoUrl, repoName, userEmail } = req.body;
       const service = AnalysisService.getInstance();
-      const analysis = await service.runAnalysis(repoUrl, repoName);
+      const analysis = await service.runAnalysis(repoUrl, repoName, userEmail);
       return res.status(200).json(analysis);
     } catch (err: any) {
       return res.status(500).json({ error: err.message });

@@ -192,8 +192,10 @@ export const ImpactAnalysisView: React.FC<ImpactAnalysisViewProps> = ({
     return analysis.files
       .filter(f => {
         if (!searchFilter.trim()) return true;
-        const q = searchFilter.toLowerCase();
-        return f.name.toLowerCase().includes(q) || f.path.toLowerCase().includes(q);
+        const q = searchFilter.toLowerCase().trim();
+        const name = (f.name || "").toLowerCase();
+        const path = (f.path || "").toLowerCase();
+        return name.includes(q) || path.includes(q);
       })
       .slice(0, 30);
   }, [analysis, searchFilter]);

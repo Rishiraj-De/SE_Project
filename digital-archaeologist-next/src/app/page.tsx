@@ -5,6 +5,8 @@ import { Sidebar, NavTab } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { ImportModal } from "@/components/views/ImportModal";
 import { LandingPage } from "@/components/views/LandingPage";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { GoogleOneTap } from "@/components/auth/GoogleOneTap";
 import { OverviewView } from "@/components/views/OverviewView";
 import { ArchitectureView } from "@/components/views/ArchitectureView";
 import { DependenciesView } from "@/components/views/DependenciesView";
@@ -13,11 +15,12 @@ import { GitHistoryView } from "@/components/views/GitHistoryView";
 import { TechDebtView } from "@/components/views/TechDebtView";
 import { RiskAnalysisView } from "@/components/views/RiskAnalysisView";
 import { ImpactAnalysisView } from "@/components/views/ImpactAnalysisView";
+import { ModernizationView } from "@/components/views/ModernizationView";
 import { AIAssistantView } from "@/components/views/AIAssistantView";
 import { ReportsView } from "@/components/views/ReportsView";
 import { SettingsView } from "@/components/views/SettingsView";
-import { AnalysisResult } from "@/lib/types";
-import { fetchAnalysisStatus, triggerAnalysis } from "@/lib/api";
+import { AnalysisResult, AuthenticatedUser, AuthProvider } from "@/lib/types";
+import { fetchAnalysisStatus, triggerAnalysis, authenticateUser } from "@/lib/api";
 
 export default function Home() {
   const [isLandingView, setIsLandingView] = useState<boolean>(true);
@@ -29,6 +32,28 @@ export default function Home() {
   const [currentStep, setCurrentStep] = useState<string>("");
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
+
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<"signin" | "signup">("signup");
+  const [authModalProvider, setAuthModalProvider] = useState<AuthProvider | null>(null);
+  const [isOneTapDismissed, setIsOneTapDismissed] = useState<boolean>(false);
+  const [isOneTapLoading, setIsOneTapLoading] = useState<boolean>(false);
+  const [pendingRepoUrl, setPendingRepoUrl] = useState<string | null>(null);
+
+  // Load existing authenticated user from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("digital_archaeologist_user");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.email) {
+          setCurrentUser(parsed);
+        }
+      }
+    } catch {}
+  }, []);
 
   // Keyboard shortcut Ctrl+B / Cmd+B to toggle sidebar
   useEffect(() => {
@@ -43,8 +68,8 @@ export default function Home() {
   }, []);
 
   // Cross-view navigation context
-  const [impactTargetSymbol, setImpactTargetSymbol] = useState<string>("PaymentService.processPayment()");
-  const [impactTargetFile, setImpactTargetFile] = useState<string>("src/payment/PaymentService.ts");
+  const [impactTargetSymbol, setImpactTargetSymbol] = useState<string>("");
+  const [impactTargetFile, setImpactTargetFile] = useState<string>("");
   const [codebaseTargetFile, setCodebaseTargetFile] = useState<string>("");
   const [assistantInitialPrompt, setAssistantInitialPrompt] = useState<string>("");
 
@@ -68,21 +93,69 @@ export default function Home() {
       });
   }, []);
 
+  const handleOpenAuth = (
+    mode: "signin" | "signup" = "signup",
+    provider: AuthProvider | null = null
+  ) => {
+    setAuthModalMode(mode);
+    setAuthModalProvider(provider);
+    setIsAuthModalOpen(true);
+  };
+
+  const handleOneTapAccountSelect = async (account: { name: string; email: string }) => {
+    setIsOneTapLoading(true);
+    try {
+      const response = await authenticateUser(account.email, account.name, "google");
+      if (response && response.user) {
+        handleAuthSuccess(response.user);
+        setIsOneTapDismissed(true);
+      }
+    } catch (err) {
+      console.error("One-tap Google authentication failed:", err);
+    } finally {
+      setIsOneTapLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setIsOneTapDismissed(false);
+    try {
+      localStorage.removeItem("digital_archaeologist_user");
+    } catch {}
+  };
+
+  const handleAuthSuccess = (user: AuthenticatedUser) => {
+    setCurrentUser(user);
+    // If user was trying to analyze a repository prior to authenticating, proceed with analysis
+    if (pendingRepoUrl) {
+      const url = pendingRepoUrl;
+      setPendingRepoUrl(null);
+      handleStartAnalysis(url);
+    }
+  };
+
   const handleStartAnalysis = async (url: string, name?: string) => {
+    if (!currentUser) {
+      setPendingRepoUrl(url);
+      handleOpenAuth("signup");
+      return;
+    }
+
     setIsAnalyzing(true);
     setCompletedSteps([]);
-    setCurrentStep("Repository cloned");
+    setCurrentStep("Cloning original repository");
 
     const steps = [
-      "Repository cloned",
-      "Languages detected",
-      "Source tree indexed",
-      "AST generated",
-      "Dependencies extracted",
-      "Git history analysis",
-      "Architecture reconstruction",
-      "Risk analysis",
-      "Documentation generation"
+      "Cloning original repository",
+      "Detecting languages",
+      "Indexing source files",
+      "Generating AST",
+      "Extracting dependencies",
+      "Analyzing Git history",
+      "Building architecture graph",
+      "Detecting technical debt",
+      "Generating documentation"
     ];
 
     let stepIndex = 0;
@@ -95,7 +168,7 @@ export default function Home() {
     }, 240);
 
     try {
-      const result = await triggerAnalysis(url, name);
+      const result = await triggerAnalysis(url, name, currentUser?.email);
       clearInterval(interval);
       setCompletedSteps(steps);
       setCurrentStep("Done");
@@ -113,16 +186,8 @@ export default function Home() {
     } catch (err) {
       clearInterval(interval);
       setIsAnalyzing(false);
-      console.error("Analysis failed:", err);
-    }
-  };
-
-  const handleUseDemo = (url?: string, name?: string) => {
-    const targetUrl = url || "https://github.com/example/legacy-payment-system";
-    const targetName = name || "legacy-payment-system";
-    setIsLandingView(false);
-    if (!analysis || analysis.repoName !== targetName) {
-      handleStartAnalysis(targetUrl, targetName);
+      console.error("Analysis failed on original repository:", err);
+      alert(`Could not analyze repository: ${err instanceof Error ? err.message : "Unknown error"}`);
     }
   };
 
@@ -159,10 +224,36 @@ export default function Home() {
     return (
       <>
         <LandingPage
-          onOpenImport={() => setIsImportOpen(true)}
-          onUseDemo={handleUseDemo}
+          onOpenImport={() => {
+            if (!currentUser) {
+              handleOpenAuth("signup");
+            } else {
+              setIsImportOpen(true);
+            }
+          }}
+          onStartAnalysis={handleStartAnalysis}
           onGoToDashboard={() => setIsLandingView(false)}
           hasAnalysis={!!analysis}
+          currentUser={currentUser}
+          onOpenAuth={handleOpenAuth}
+          onLogout={handleLogout}
+        />
+
+        {/* Google One Tap Automatic Sign-in Prompt */}
+        <GoogleOneTap
+          isOpen={isLandingView && !currentUser && !isOneTapDismissed}
+          onClose={() => setIsOneTapDismissed(true)}
+          onSelectAccount={handleOneTapAccountSelect}
+          isLoading={isOneTapLoading}
+        />
+
+        {/* Authenticator Modal */}
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          onSuccess={handleAuthSuccess}
+          initialMode={authModalMode}
+          initialProvider={authModalProvider}
         />
 
         {/* Import Modal */}
@@ -170,12 +261,12 @@ export default function Home() {
           isOpen={isImportOpen}
           onClose={() => setIsImportOpen(false)}
           onStartAnalysis={async (url, name) => {
-            setIsLandingView(false);
             await handleStartAnalysis(url, name);
           }}
           isAnalyzing={isAnalyzing}
           completedSteps={completedSteps}
           currentStep={currentStep}
+          userEmail={currentUser?.email}
         />
       </>
     );
@@ -183,7 +274,7 @@ export default function Home() {
 
   // Dashboard View
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#FAF9F6] relative selection:bg-[#E8532E]/20 selection:text-[#E8532E]">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#FAF9F7] relative selection:bg-[#E8532E]/20 selection:text-[#E8532E]">
       {/* Ambient background glows for Apple-like glass depth */}
       <div className="absolute top-0 right-1/4 w-[600px] h-[600px] bg-orange-100/30 rounded-full blur-3xl pointer-events-none -z-0" />
       <div className="absolute bottom-0 left-1/3 w-[500px] h-[500px] bg-orange-50/40 rounded-full blur-3xl pointer-events-none -z-0" />
@@ -192,7 +283,7 @@ export default function Home() {
       <Sidebar
         activeTab={activeTab}
         onSelectTab={setActiveTab}
-        repoName={analysis?.repoName || "legacy-payment-system"}
+        repoName={analysis?.repoName || "original-repository"}
         branch={analysis?.branch || "main"}
         onOpenImport={() => setIsImportOpen(true)}
         onGoLanding={() => setIsLandingView(true)}
@@ -203,10 +294,10 @@ export default function Home() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden bg-transparent relative z-10">
         <Header
-          repoName={analysis?.repoName || "legacy-payment-system"}
+          repoName={analysis?.repoName || "original-repository"}
           branch={analysis?.branch || "main"}
           analyzedAt={analysis?.analyzedAt}
-          healthScore={analysis?.summary.healthScore || 68}
+          healthScore={analysis?.summary?.healthScore || 68}
           isAnalyzing={isAnalyzing}
           onTriggerAnalysis={() => setIsImportOpen(true)}
           onOpenReport={() => setActiveTab("reports")}
@@ -215,6 +306,8 @@ export default function Home() {
           onGoLanding={() => setIsLandingView(true)}
           isSidebarOpen={isSidebarOpen}
           onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+          currentUser={currentUser}
+          onLogout={handleLogout}
         />
 
         <main className="flex-1 overflow-y-auto relative z-10">
@@ -262,6 +355,7 @@ export default function Home() {
               onInspectFile={handleNavigateToCodebase}
               onNavigateToImpact={handleNavigateToImpact}
               onAskAI={handleNavigateToAssistant}
+              onNavigateToModernization={() => setActiveTab("modernization")}
             />
           )}
 
@@ -285,6 +379,14 @@ export default function Home() {
             />
           )}
 
+          {activeTab === "modernization" && (
+            <ModernizationView
+              analysis={analysis}
+              onInspectFile={handleNavigateToCodebase}
+              onAskAI={handleNavigateToAssistant}
+            />
+          )}
+
           {activeTab === "assistant" && (
             <AIAssistantView initialPrompt={assistantInitialPrompt} />
           )}
@@ -297,6 +399,15 @@ export default function Home() {
         </main>
       </div>
 
+      {/* Authenticator Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+        initialMode={authModalMode}
+        initialProvider={authModalProvider}
+      />
+
       {/* Import Modal */}
       <ImportModal
         isOpen={isImportOpen}
@@ -305,6 +416,7 @@ export default function Home() {
         isAnalyzing={isAnalyzing}
         completedSteps={completedSteps}
         currentStep={currentStep}
+        userEmail={currentUser?.email}
       />
     </div>
   );

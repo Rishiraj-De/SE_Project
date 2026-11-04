@@ -5,23 +5,19 @@ export async function GET() {
   const store = AnalysisStore.getInstance();
   const analysis = store.getCurrentAnalysis();
 
+  if (!analysis) {
+    return NextResponse.json({ error: "No active analysis found." }, { status: 404 });
+  }
+
   return NextResponse.json({
     summary: analysis.summary,
     languages: analysis.languages,
-    healthScore: analysis.summary.healthScore,
-    immediateAttention: [
-      {
-        type: "CIRCULAR_DEPENDENCY",
-        title: "Circular Dependency Detected",
-        description: "PaymentService <-> TransactionService forms a cyclic dependency loop.",
-        severity: "HIGH"
-      },
-      {
-        type: "SECURITY_DEPRECATION",
-        title: "Insecure MD5 Hashing in Auth",
-        description: "LegacyCryptoUtils.legacy_v1_encrypt utilizes weak MD5 algorithm.",
-        severity: "HIGH"
-      }
-    ]
+    healthScore: analysis.summary?.healthScore || 68,
+    immediateAttention: (analysis.circularDependencies || []).map((cd) => ({
+      type: "CIRCULAR_DEPENDENCY",
+      title: "Circular Dependency Detected",
+      description: `${cd.modules.join(" <-> ")} forms a cyclic loop.`,
+      severity: cd.severity
+    }))
   });
 }

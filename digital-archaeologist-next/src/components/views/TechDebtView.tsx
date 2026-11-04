@@ -14,7 +14,8 @@ import {
   ChevronDown,
   ChevronUp,
   Flame,
-  Bot
+  Bot,
+  Wrench
 } from "lucide-react";
 
 interface TechDebtViewProps {
@@ -22,6 +23,7 @@ interface TechDebtViewProps {
   onInspectFile?: (filePath: string) => void;
   onNavigateToImpact?: (symbol: string, file: string) => void;
   onAskAI?: (prompt: string) => void;
+  onNavigateToModernization?: () => void;
 }
 
 function AnimatedNumber({ value }: { value: number }) {
@@ -58,7 +60,8 @@ export const TechDebtView: React.FC<TechDebtViewProps> = ({
   technicalDebt,
   onInspectFile,
   onNavigateToImpact,
-  onAskAI
+  onAskAI,
+  onNavigateToModernization
 }) => {
   const [selectedSeverity, setSelectedSeverity] = useState<string>("ALL");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
@@ -408,6 +411,16 @@ export const TechDebtView: React.FC<TechDebtViewProps> = ({
                           >
                             <Zap className="w-3.5 h-3.5" />
                             <span>Simulate Blast Radius</span>
+                          </button>
+                        )}
+
+                        {onNavigateToModernization && (
+                          <button
+                            onClick={onNavigateToModernization}
+                            className="failade-btn-secondary !py-1.5 !px-3 font-mono text-xs flex items-center gap-1.5 border-orange-200 text-[#E8532E]"
+                          >
+                            <Wrench className="w-3.5 h-3.5" />
+                            <span>Refactor Studio</span>
                           </button>
                         )}
 

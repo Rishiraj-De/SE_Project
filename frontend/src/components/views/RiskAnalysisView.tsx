@@ -87,10 +87,14 @@ export const RiskAnalysisView: React.FC<RiskAnalysisViewProps> = ({
         (selectedRiskFilter === "MEDIUM" && point.riskLevel === "MEDIUM") ||
         (selectedRiskFilter === "LOW" && point.riskLevel === "LOW");
 
+      const q = searchQuery.toLowerCase().trim();
+      const name = (point.name || "").toLowerCase();
+      const path = (point.path || "").toLowerCase();
+
       const matchSearch =
-        !searchQuery ||
-        point.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        point.path.toLowerCase().includes(searchQuery.toLowerCase());
+        !q ||
+        name.includes(q) ||
+        path.includes(q);
 
       return matchLevel && matchSearch;
     });

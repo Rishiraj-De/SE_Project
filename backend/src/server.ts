@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { RepositoryController } from "./controllers/repository.controller";
+import { AuthController } from "./controllers/auth.controller";
 
 dotenv.config();
 
@@ -20,6 +21,11 @@ app.use((req, res, next) => {
   });
   next();
 });
+
+// Authentication & SQLite Database Persistence
+app.post("/api/auth/authenticate", AuthController.authenticate);
+app.get("/api/auth/user/:email", AuthController.getUser);
+app.get("/api/auth/users", AuthController.getAllUsers);
 
 // Health check & Database Status
 app.get("/api/health", (req, res) => {

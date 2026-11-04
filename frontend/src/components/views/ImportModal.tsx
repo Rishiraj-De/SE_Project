@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { GitBranch, X, Check, Loader2, ArrowRight, Play, Sparkles } from "lucide-react";
+import { GitBranch, X, Check, Loader2, ArrowRight, ShieldCheck, Lock } from "lucide-react";
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -10,6 +10,7 @@ interface ImportModalProps {
   isAnalyzing: boolean;
   completedSteps?: string[];
   currentStep?: string;
+  userEmail?: string;
 }
 
 export const ImportModal: React.FC<ImportModalProps> = ({
@@ -18,15 +19,16 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   onStartAnalysis,
   isAnalyzing,
   completedSteps = [],
-  currentStep = ""
+  currentStep = "",
+  userEmail
 }) => {
-  const [repoUrl, setRepoUrl] = useState("https://github.com/example/legacy-payment-system");
+  const [repoUrl, setRepoUrl] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
   if (!isOpen) return null;
 
   const pipelineSteps = [
-    "Cloning repository",
+    "Cloning original repository",
     "Detecting languages",
     "Indexing source files",
     "Generating AST",
@@ -38,7 +40,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   ];
 
   const stepMapping: Record<string, string> = {
-    "Repository cloned": "Cloning repository",
+    "Repository cloned": "Cloning original repository",
     "Languages detected": "Detecting languages",
     "Source tree indexed": "Indexing source files",
     "AST generated": "Generating AST",
@@ -51,23 +53,25 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!repoUrl.trim()) {
-      setErrorMsg("Please provide a valid GitHub repository URL");
+    const trimmed = repoUrl.trim();
+    if (!trimmed) {
+      setErrorMsg("Please provide your original Git repository URL.");
+      return;
+    }
+    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://") && !trimmed.startsWith("git@")) {
+      setErrorMsg("Please provide a valid repository URL (e.g. https://github.com/owner/repository).");
       return;
     }
     setErrorMsg("");
-    await onStartAnalysis(repoUrl.trim());
-  };
-
-  const handleUseDemo = async (name: string) => {
-    setRepoUrl("https://github.com/example/legacy-payment-system");
-    setErrorMsg("");
-    await onStartAnalysis("https://github.com/example/legacy-payment-system", name);
+    await onStartAnalysis(trimmed);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md p-4">
-      <div className="w-full max-w-lg bg-white/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/85 overflow-hidden relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-lg bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/80 overflow-hidden relative">
+        {/* Header accent strip */}
+        <div className="h-1.5 bg-gradient-to-r from-[#E8532E] to-orange-400" />
+
         {/* Close button */}
         {!isAnalyzing && (
           <button
@@ -83,17 +87,26 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             <>
               {/* Title */}
               <div className="text-center space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 text-[#E8532E] text-xs font-medium border border-orange-200/60">
+                  <GitBranch className="w-3.5 h-3.5" />
+                  <span>Original Repository Link</span>
+                </div>
                 <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-                  Start your excavation.
+                  Excavate Original Repository
                 </h2>
-                <p className="text-sm text-gray-500">
-                  Enter a GitHub repository URL to analyze its architecture, history, dependencies and more.
+                <p className="text-sm text-gray-500 max-w-md mx-auto">
+                  Provide the link to your Git repository (GitHub, GitLab, or Bitbucket) to deconstruct its AST and architecture.
                 </p>
+                {userEmail && (
+                  <p className="text-xs text-green-700 font-medium">
+                    Analysis will be associated with: <strong>{userEmail}</strong>
+                  </p>
+                )}
               </div>
 
               {/* URL Input */}
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <div className="flex-1 relative">
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                       <GitBranch className="w-4 h-4" />
@@ -101,36 +114,38 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     <input
                       type="text"
                       value={repoUrl}
-                      onChange={(e) => setRepoUrl(e.target.value)}
-                      placeholder="https://github.com/username/repository"
-                      className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-300 rounded-lg focus:border-[#E8532E] focus:ring-1 focus:ring-[#E8532E]/20 focus:outline-none text-gray-900 transition-all"
+                      onChange={(e) => {
+                        setRepoUrl(e.target.value);
+                        if (errorMsg) setErrorMsg("");
+                      }}
+                      placeholder="https://github.com/organization/repository"
+                      className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-300 rounded-xl focus:border-[#E8532E] focus:ring-2 focus:ring-[#E8532E]/20 focus:outline-none text-gray-900 transition-all shadow-2xs"
                     />
                   </div>
                   <button
                     type="submit"
-                    className="failade-btn-primary !py-2.5 !px-4 text-sm flex items-center gap-2 whitespace-nowrap"
+                    className="failade-btn-primary !py-2.5 !px-5 text-sm flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer shadow-sm"
                   >
-                    <span>Analyze Repository</span>
+                    <span>Start Excavation</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
-                {errorMsg && <p className="text-xs text-red-500">{errorMsg}</p>}
+                {errorMsg && (
+                  <p className="text-xs text-red-500 bg-red-50 border border-red-200 p-2 rounded-lg">
+                    {errorMsg}
+                  </p>
+                )}
               </form>
 
-              {/* Demo repos */}
-              <div className="text-center space-y-3">
-                <span className="text-xs text-gray-400">or try a demo repository</span>
-                <div className="flex items-center justify-center gap-3">
-                  {["Sample Java Project", "Sample Python Project", "Legacy Web App"].map((name) => (
-                    <button
-                      key={name}
-                      onClick={() => handleUseDemo(name)}
-                      className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:text-[#E8532E] hover:border-orange-200 hover:bg-orange-50 transition-all"
-                    >
-                      {name}
-                    </button>
-                  ))}
+              {/* Security & Verification Banner */}
+              <div className="p-3.5 rounded-xl bg-[#FAF9F7] border border-[#EAE7E0] space-y-1.5 text-xs text-gray-600">
+                <div className="flex items-center gap-1.5 font-medium text-gray-800">
+                  <ShieldCheck className="w-4 h-4 text-[#E8532E]" />
+                  <span>Original Repository Security & Privacy</span>
                 </div>
+                <p className="text-[11px] text-gray-500 leading-relaxed">
+                  Only the original repository link provided above will be cloned and analyzed. Supports public Git repositories across GitHub, GitLab, and Bitbucket.
+                </p>
               </div>
             </>
           ) : (
@@ -138,16 +153,16 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             <div className="space-y-5">
               <div className="space-y-1">
                 <h2 className="text-xl font-bold text-gray-900 tracking-tight">
-                  Analyzing repository...
+                  Excavating original codebase...
                 </h2>
                 <p className="text-sm text-gray-500">
-                  This may take a few minutes. We&apos;re excavating the codebase.
+                  Cloning and generating AST syntax trees and dependency graphs.
                 </p>
               </div>
 
               <div className="space-y-2 py-2 text-sm">
                 {pipelineSteps.map((step) => {
-                  const mappedCompleted = completedSteps.map(s => stepMapping[s] || s);
+                  const mappedCompleted = completedSteps.map((s) => stepMapping[s] || s);
                   const mappedCurrent = stepMapping[currentStep] || currentStep;
                   const isDone = mappedCompleted.includes(step);
                   const isCurrent = mappedCurrent === step;
@@ -167,7 +182,15 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                           <span className="w-2 h-2 rounded-full bg-gray-200" />
                         </div>
                       )}
-                      <span className={isDone ? "text-gray-700" : isCurrent ? "text-[#E8532E] font-medium" : "text-gray-400"}>
+                      <span
+                        className={
+                          isDone
+                            ? "text-gray-700"
+                            : isCurrent
+                            ? "text-[#E8532E] font-medium"
+                            : "text-gray-400"
+                        }
+                      >
                         {step}
                       </span>
                     </div>
@@ -176,7 +199,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
               </div>
 
               <p className="text-xs text-gray-400">
-                This may take 2-4 minutes for larger repositories.
+                This may take a moment depending on the size of the repository.
               </p>
             </div>
           )}

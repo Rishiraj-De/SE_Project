@@ -13,8 +13,8 @@ export class AnalysisService {
   private isAnalyzing: boolean = false;
 
   private constructor() {
-    // Load pre-warmed demo cache if exists
-    this.initDefaultDemo();
+    // Only analyze original repositories provided by the user
+    this.currentAnalysis = null;
   }
 
   public static getInstance(): AnalysisService {
@@ -22,22 +22,6 @@ export class AnalysisService {
       AnalysisService.instance = new AnalysisService();
     }
     return AnalysisService.instance;
-  }
-
-  private async initDefaultDemo() {
-    const demoDir = path.resolve(__dirname, "../../../demo-repo/legacy-payment-system");
-    if (fs.existsSync(demoDir)) {
-      try {
-        const result = await this.executeAnalysis(demoDir, "https://github.com/example/legacy-payment-system", "legacy-payment-system");
-        result.repoDir = demoDir;
-        this.currentAnalysis = result;
-        // Persist to relational database
-        const { AnalysisRepository } = await import("../repositories/analysis.repository");
-        await AnalysisRepository.saveAnalysisRun(result);
-      } catch (err) {
-        console.warn("Could not pre-warm demo analysis:", err);
-      }
-    }
   }
 
   public getCurrentAnalysis(): AnalysisResult | null {
@@ -51,9 +35,14 @@ export class AnalysisService {
     };
   }
 
-  public async runAnalysis(repoUrl: string, repoName?: string): Promise<AnalysisResult> {
+  public async runAnalysis(repoUrl: string, repoName?: string, userEmail?: string): Promise<AnalysisResult> {
+    if (!repoUrl || typeof repoUrl !== "string" || !repoUrl.trim()) {
+      throw new Error("A valid original Git repository link must be provided.");
+    }
+
     this.isAnalyzing = true;
-    const name = repoName || repoUrl.split("/").pop()?.replace(".git", "") || "legacy-repo";
+    const cleanUrl = repoUrl.trim();
+    const name = repoName || cleanUrl.split("/").filter(Boolean).pop()?.replace(".git", "") || "original-repo";
     const runId = "run_" + Date.now();
 
     // Default pipeline steps
@@ -69,19 +58,18 @@ export class AnalysisService {
       "Documentation generation"
     ];
 
-    let targetDir = path.resolve(__dirname, "../../../demo-repo/legacy-payment-system");
+    const safeName = name.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const tempCloneDir = path.resolve(__dirname, `../../temp-repos/${safeName}_${Date.now()}`);
+    fs.mkdirSync(path.dirname(tempCloneDir), { recursive: true });
 
-    // If an external GitHub URL is passed (and not the demo), clone into a temp workspace
-    if (repoUrl && !repoUrl.includes("legacy-payment-system") && !repoUrl.includes("demo")) {
-      const safeName = name.replace(/[^a-zA-Z0-9_-]/g, "_");
-      const tempCloneDir = path.resolve(__dirname, `../../temp-repos/${safeName}_${Date.now()}`);
-      try {
-        fs.mkdirSync(path.dirname(tempCloneDir), { recursive: true });
-        await execPromise(`git clone --depth 50 "${repoUrl}" "${tempCloneDir}"`, { timeout: 120000 });
-        targetDir = tempCloneDir;
-      } catch (e: any) {
-        console.error("Git clone failed, falling back to demo repo:", e.message);
-      }
+    let targetDir = tempCloneDir;
+    try {
+      console.log(`[ANALYSIS] Cloning original repository from: ${cleanUrl}`);
+      await execPromise(`git clone --depth 50 "${cleanUrl}" "${tempCloneDir}"`, { timeout: 180000 });
+    } catch (e: any) {
+      this.isAnalyzing = false;
+      console.error(`[ANALYSIS ERROR] Failed to clone ${cleanUrl}:`, e.message);
+      throw new Error(`Failed to clone original repository from "${cleanUrl}". Please ensure the link is public, accessible, and correctly formatted.`);
     }
 
     const initialResult: AnalysisResult = {
@@ -141,7 +129,7 @@ export class AnalysisService {
     // Persist to relational SQLite database via Prisma
     try {
       const { AnalysisRepository } = await import("../repositories/analysis.repository");
-      await AnalysisRepository.saveAnalysisRun(analysisData);
+      await AnalysisRepository.saveAnalysisRun(analysisData, userEmail);
     } catch (e: any) {
       console.warn("Could not save to database:", e.message);
     }

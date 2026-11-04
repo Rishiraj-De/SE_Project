@@ -160,7 +160,8 @@ const ArchitectureNode = ({ data, selected }: { data: any; selected: boolean }) 
 };
 
 const nodeTypes = {
-  archNode: ArchitectureNode
+  archNode: ArchitectureNode,
+  customModuleNode: ArchitectureNode
 };
 
 type ArchTab = "graph" | "modules" | "subsystems" | "circular";
@@ -173,8 +174,8 @@ export const ArchitectureView: React.FC<ArchitectureViewProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [layerFilter, setLayerFilter] = useState<string>("all");
   const [riskFilter, setRiskFilter] = useState<string>("all");
-  const [hideUnconnected, setHideUnconnected] = useState<boolean>(true);
-  const [focusMode, setFocusMode] = useState<boolean>(true);
+  const [hideUnconnected, setHideUnconnected] = useState<boolean>(false);
+  const [focusMode, setFocusMode] = useState<boolean>(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   const [rawNodes, setRawNodes] = useState<any[]>([]);
@@ -188,15 +189,80 @@ export const ArchitectureView: React.FC<ArchitectureViewProps> = ({
     setIsLoading(true);
     fetchArchitecture()
       .then((data) => {
-        setRawNodes(data.nodes || []);
-        setRawEdges(data.edges || []);
+        const rawEdgesData = data.edges || [];
+        const connectedIds = new Set<string>();
+        for (const e of rawEdgesData) {
+          if (e.source) connectedIds.add(e.source);
+          if (e.target) connectedIds.add(e.target);
+        }
+
+        const normalizedNodes = (data.nodes || []).map((n: any, idx: number) => {
+          const d = n.data || {};
+          const isConnected =
+            n.isConnected ??
+            (connectedIds.has(n.id) ||
+              (Array.isArray(d.imports) && d.imports.length > 0) ||
+              (Array.isArray(d.importedBy) && d.importedBy.length > 0));
+
+          const col = idx % 5;
+          const row = Math.floor(idx / 5);
+          const posX =
+            typeof n.position?.x === "number"
+              ? n.position.x
+              : typeof n.x === "number"
+              ? n.x
+              : col * 280 + 80;
+          const posY =
+            typeof n.position?.y === "number"
+              ? n.position.y
+              : typeof n.y === "number"
+              ? n.y
+              : row * 200 + 80;
+
+          return {
+            ...d,
+            ...n,
+            id: n.id,
+            label: n.label || d.label || n.id,
+            layer: n.layer || d.layer || "services",
+            role: n.role || d.role || "service",
+            risk: n.risk || d.risk || (d.complexity > 15 ? "HIGH" : d.complexity > 8 ? "MEDIUM" : "LOW"),
+            path: n.path || d.path || "",
+            symbols: n.symbols || d.symbols || [],
+            imports: n.imports || d.imports || [],
+            importedBy: n.importedBy || d.importedBy || [],
+            loc: n.loc || d.loc || 150,
+            complexity: n.complexity || d.complexity || 5,
+            isConnected,
+            x: posX,
+            y: posY,
+            position: { x: posX, y: posY },
+            data: {
+              ...d,
+              label: n.label || d.label || n.id,
+              layer: n.layer || d.layer || "services",
+              role: n.role || d.role || "service",
+              risk: n.risk || d.risk || (d.complexity > 15 ? "HIGH" : d.complexity > 8 ? "MEDIUM" : "LOW"),
+              imports: n.imports || d.imports || [],
+              importedBy: n.importedBy || d.importedBy || [],
+              loc: n.loc || d.loc || 150,
+              complexity: n.complexity || d.complexity || 5,
+            }
+          };
+        });
+
+        setRawNodes(normalizedNodes);
+        setRawEdges(rawEdgesData);
         setCircularDependencies(data.circularDependencies || []);
         setSubsystems(data.subsystems || []);
         setIsLoading(false);
 
         // Select the first high risk or connected node by default
-        if (data.nodes && data.nodes.length > 0) {
-          const defaultNode = data.nodes.find((n: any) => n.risk === "HIGH" && n.isConnected) || data.nodes[0];
+        if (normalizedNodes.length > 0) {
+          const defaultNode =
+            normalizedNodes.find((n: any) => n.risk === "HIGH" && n.isConnected) ||
+            normalizedNodes.find((n: any) => n.isConnected) ||
+            normalizedNodes[0];
           setSelectedNodeId(defaultNode.id);
         }
       })
@@ -321,10 +387,16 @@ export const ArchitectureView: React.FC<ArchitectureViewProps> = ({
   // Filtered list of modules for the "Modules Explorer" tab
   const explorerModules = useMemo(() => {
     return rawNodes.filter((m) => {
+      const q = searchQuery.toLowerCase().trim();
+      const label = (m.label || m.name || m.id || "").toLowerCase();
+      const path = (m.path || "").toLowerCase();
+
       const matchSearch =
-        m.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.path.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (m.symbols && m.symbols.some((s: string) => s.toLowerCase().includes(searchQuery.toLowerCase())));
+        !q ||
+        label.includes(q) ||
+        path.includes(q) ||
+        (Array.isArray(m.symbols) &&
+          m.symbols.some((s: string) => typeof s === "string" && s.toLowerCase().includes(q)));
 
       const matchLayer = layerFilter === "all" || m.layer === layerFilter;
       const matchRisk = riskFilter === "all" || m.risk === riskFilter;

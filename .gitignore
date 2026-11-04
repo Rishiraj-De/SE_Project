@@ -17,6 +17,7 @@ out/
 *.db-journal
 backend/prisma/dev.db*
 backend/temp-repos/
+*users.json
 
 # Python cache
 __pycache__/

@@ -7,7 +7,6 @@ import {
   History,
   AlertTriangle,
   ArrowRight,
-  Play,
   Upload,
   Layers,
   Sparkles,
@@ -15,38 +14,62 @@ import {
   Shield,
   Zap,
   CheckCircle2,
-  Star,
-  Search,
-  ExternalLink,
   ChevronRight,
-  Database
+  Database,
+  User,
+  LogOut,
+  Mail,
+  Lock
 } from "lucide-react";
+import { AuthenticatedUser } from "@/lib/types";
 
 interface LandingPageProps {
   onOpenImport: () => void;
-  onUseDemo: (repoUrl?: string, repoName?: string) => void;
+  onStartAnalysis: (repoUrl: string, repoName?: string) => void;
   onGoToDashboard?: () => void;
   hasAnalysis?: boolean;
+  currentUser?: AuthenticatedUser | null;
+  onOpenAuth: (mode?: "signin" | "signup", provider?: "google" | "apple" | "email") => void;
+  onLogout: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenImport,
-  onUseDemo,
+  onStartAnalysis,
   onGoToDashboard,
-  hasAnalysis = false
+  hasAnalysis = false,
+  currentUser,
+  onOpenAuth,
+  onLogout
 }) => {
   const [repoInputUrl, setRepoInputUrl] = useState("");
+  const [validationError, setValidationError] = useState("");
 
   const handleExcavationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (repoInputUrl.trim()) {
-      const trimmed = repoInputUrl.trim();
-      const parts = trimmed.split("/");
-      const derivedName = parts[parts.length - 1] || "analyzed-repo";
-      onUseDemo(trimmed, derivedName);
-    } else {
-      onOpenImport();
+    const trimmed = repoInputUrl.trim();
+
+    if (!trimmed) {
+      setValidationError("Please enter your original Git repository URL.");
+      return;
     }
+
+    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://") && !trimmed.startsWith("git@")) {
+      setValidationError("Please enter a valid Git URL (e.g. https://github.com/organization/repository).");
+      return;
+    }
+
+    setValidationError("");
+
+    // If not authenticated, require authentication first
+    if (!currentUser) {
+      onOpenAuth("signup");
+      return;
+    }
+
+    const parts = trimmed.split("/").filter(Boolean);
+    const derivedName = parts[parts.length - 1]?.replace(".git", "") || "original-repo";
+    onStartAnalysis(trimmed, derivedName);
   };
 
   const heroFeatureCards = [
@@ -101,6 +124,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       ),
       title: "Technical Debt",
       description: "Find risks and maintainability issues."
+    },
+    {
+      id: "modernization",
+      icon: (
+        <svg className="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+        </svg>
+      ),
+      title: "Refactor Studio",
+      description: "Interactive codemods, unified diffs & ROI simulation."
     }
   ];
 
@@ -122,12 +155,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           {/* Navigation Links */}
           <div className="hidden md:flex items-center gap-7 text-[13px] text-gray-600">
             <a href="#features" className="hover:text-[#E8532E] transition-colors font-medium">Features</a>
-            <a href="#excavation" className="hover:text-[#E8532E] transition-colors font-medium">Use Cases</a>
+            <a href="#authenticator" className="hover:text-[#E8532E] transition-colors font-medium">Authenticator</a>
+            <a href="#excavation" className="hover:text-[#E8532E] transition-colors font-medium">Original Repos</a>
             <a href="#how-it-works" className="hover:text-[#E8532E] transition-colors font-medium">How it works</a>
-            <a href="#faq" className="hover:text-[#E8532E] transition-colors font-medium">Docs</a>
           </div>
         </div>
 
+        {/* Right Section: Auth & Actions */}
         <div className="flex items-center gap-3 sm:gap-4">
           {hasAnalysis && onGoToDashboard && (
             <button
@@ -139,23 +173,59 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </button>
           )}
 
-          <button
-            onClick={() => onUseDemo()}
-            className="text-[13px] text-gray-700 hover:text-[#1A1A1A] font-medium transition-colors hidden sm:block px-2 py-1"
-          >
-            Sign in
-          </button>
+          {currentUser ? (
+            /* Authenticated User Badge */
+            <div className="flex items-center gap-2 sm:gap-3 bg-white border border-[#DDD9D0] rounded-xl px-3 py-1.5 shadow-2xs">
+              <div className="w-6 h-6 rounded-full bg-[#E8532E] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
+              </div>
+              <div className="hidden sm:block text-left">
+                <div className="text-xs font-semibold text-gray-900 leading-tight truncate max-w-[120px]">
+                  {currentUser.name}
+                </div>
+                <div className="text-[10px] text-green-600 flex items-center gap-1 font-mono leading-none">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
+                  <span>DB Synced</span>
+                </div>
+              </div>
+              <button
+                onClick={onLogout}
+                title="Sign out"
+                className="p-1 rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100 transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            /* Unauthenticated Buttons */
+            <>
+              <button
+                onClick={() => onOpenAuth("signin")}
+                className="text-[13px] text-gray-700 hover:text-[#1A1A1A] font-medium transition-colors hidden sm:block px-2.5 py-1"
+              >
+                Sign In
+              </button>
+
+              <button
+                onClick={() => onOpenAuth("signup")}
+                className="bg-[#E8532E] hover:bg-[#D4441F] text-white text-[13px] font-medium px-4 py-2 rounded-lg shadow-sm hover:shadow transition-all"
+              >
+                Sign Up
+              </button>
+            </>
+          )}
 
           <button
             onClick={onOpenImport}
-            className="bg-[#E8532E] hover:bg-[#D4441F] text-white text-[13px] font-medium px-4 py-2 rounded-lg shadow-sm hover:shadow transition-all"
+            className="border border-[#DDD9D0] hover:border-gray-400 bg-white text-gray-800 text-[13px] font-medium px-3.5 py-2 rounded-lg shadow-2xs hover:shadow transition-all hidden md:flex items-center gap-1.5"
           >
-            Get Started
+            <Upload className="w-3.5 h-3.5 text-[#E8532E]" />
+            <span>Import</span>
           </button>
         </div>
       </nav>
 
-      {/* ─── Hero Section (Matching top-left panel of reference) ─── */}
+      {/* ─── Hero Section with Authenticator Option Card ─── */}
       <section className="pt-10 pb-16 px-6 sm:px-10 lg:px-16 max-w-7xl mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left Column: Heading, Subtitle & Action buttons */}
@@ -163,7 +233,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {/* Small Pill Tag */}
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F3EFE9] border border-[#E5E0D8] text-xs font-medium text-[#4A4744]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#E8532E]" />
-              <span>Built for developers</span>
+              <span>Original Codebase Deconstruction Platform</span>
             </div>
 
             {/* Main Editorial Headline */}
@@ -175,26 +245,96 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             {/* Subtitle */}
             <p className="text-[16px] text-gray-600 leading-relaxed max-w-md">
-              Analyze architecture, dependencies, history and technical debt before you touch the code.
+              Analyze architecture, dependencies, history and technical debt from your original repository before you touch the code.
             </p>
 
-            {/* Two Primary Option Buttons */}
-            <div className="flex flex-wrap items-center gap-3.5 pt-2">
+            {/* Primary Action Buttons */}
+            <div className="flex flex-wrap items-center gap-3.5 pt-1">
               <button
                 onClick={onOpenImport}
                 className="bg-[#E8532E] hover:bg-[#D4441F] text-white font-medium px-6 py-2.5 rounded-lg text-[14px] shadow-sm hover:shadow-md transition-all flex items-center gap-2 group cursor-pointer"
               >
                 <Upload className="w-4 h-4" />
-                <span>Import Repository</span>
+                <span>Import Original Repository</span>
               </button>
 
-              <button
-                onClick={() => onUseDemo()}
-                className="bg-white hover:bg-orange-50 text-[#E8532E] font-medium px-6 py-2.5 rounded-lg text-[14px] border border-[#E8532E]/40 hover:border-[#E8532E] transition-all flex items-center gap-2 cursor-pointer shadow-sm"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>Use Demo Repository</span>
-              </button>
+              {!currentUser ? (
+                <button
+                  onClick={() => onOpenAuth("signup")}
+                  className="bg-white hover:bg-orange-50 text-[#E8532E] font-medium px-5 py-2.5 rounded-lg text-[14px] border border-[#E8532E]/40 hover:border-[#E8532E] transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+                >
+                  <User className="w-4 h-4" />
+                  <span>Authenticate to Start</span>
+                </button>
+              ) : (
+                <a
+                  href="#excavation"
+                  className="bg-white hover:bg-gray-50 text-gray-800 font-medium px-5 py-2.5 rounded-lg text-[14px] border border-gray-300 transition-all flex items-center gap-2 shadow-2xs"
+                >
+                  <GitBranch className="w-4 h-4 text-[#E8532E]" />
+                  <span>Enter Repository Link</span>
+                </a>
+              )}
+            </div>
+
+            {/* Authenticator Quick Bar */}
+            <div id="authenticator" className="p-4 rounded-2xl bg-white border border-[#E5E3DC] shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-900">
+                  <Database className="w-3.5 h-3.5 text-[#E8532E]" />
+                  <span>Authenticator & Database Storage</span>
+                </div>
+                {currentUser && (
+                  <span className="text-[11px] font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-md border border-green-200">
+                    Active Session
+                  </span>
+                )}
+              </div>
+
+              {currentUser ? (
+                <div className="text-xs text-gray-600 space-y-1">
+                  <p>
+                    Logged in as <strong>{currentUser.name}</strong> ({currentUser.email})
+                  </p>
+                  <p className="text-[11px] text-gray-500 font-mono">
+                    Provider: {currentUser.provider} • Stored in SQLite database via Prisma
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs text-gray-500">
+                    Authenticate to store your name and email in the SQLite database before running analysis:
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onOpenAuth("signup", "google")}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 hover:border-gray-300 bg-gray-50/70 hover:bg-gray-100/70 text-xs font-medium text-gray-800 transition-all cursor-pointer"
+                    >
+                      <GoogleIconSmall />
+                      <span>Google</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onOpenAuth("signup", "apple")}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-black hover:bg-gray-900 text-white text-xs font-medium transition-all cursor-pointer"
+                    >
+                      <AppleIconSmall />
+                      <span>Apple</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onOpenAuth("signup", "email")}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 hover:border-gray-300 bg-gray-50/70 hover:bg-gray-100/70 text-xs font-medium text-gray-800 transition-all cursor-pointer"
+                    >
+                      <Mail className="w-3.5 h-3.5 text-[#E8532E]" />
+                      <span>Email</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -212,8 +352,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
         </div>
 
-        {/* ─── Four Feature Boxes (Directly below hero, matching reference) ─── */}
-        <div className="mt-14 pt-8 border-t border-[#EAE8E3]">
+        {/* ─── Four Feature Boxes ─── */}
+        <div id="features" className="mt-14 pt-8 border-t border-[#EAE8E3]">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {heroFeatureCards.map((card) => (
               <div
@@ -237,71 +377,72 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* ─── "Start your excavation" Section (Matching top-middle panel of reference) ─── */}
+      {/* ─── "Start your excavation" Section (Strictly Original Repository Link) ─── */}
       <section id="excavation" className="py-16 px-6 sm:px-10 lg:px-16 bg-[#F5F3EE] border-y border-[#EAE7DF]">
         <div className="max-w-4xl mx-auto text-center space-y-6">
           <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/60 text-[#E8532E] text-xs font-medium border border-orange-200">
+              <GitBranch className="w-3.5 h-3.5" />
+              <span>Original Repository Excavation</span>
+            </div>
             <h2 className="text-3xl sm:text-4xl font-serif text-[#1A1A1A] tracking-tight">
               Start your excavation.
             </h2>
             <p className="text-sm sm:text-[15px] text-gray-600 max-w-lg mx-auto">
-              Enter a GitHub repository URL to analyze its architecture, history, dependencies and more.
+              Enter the link to your original Git repository. The engine clones the source, generates AST syntax trees, and maps dependencies.
             </p>
           </div>
 
           {/* GitHub Input Card */}
-          <form onSubmit={handleExcavationSubmit} className="max-w-2xl mx-auto">
+          <form onSubmit={handleExcavationSubmit} className="max-w-2xl mx-auto space-y-2">
             <div className="flex flex-col sm:flex-row items-stretch gap-2 bg-white p-2 rounded-xl border border-[#DDD9D0] shadow-sm focus-within:border-[#E8532E] focus-within:ring-2 focus-within:ring-[#E8532E]/20 transition-all">
               <div className="flex items-center gap-3 px-3 py-2 flex-1">
-                <svg className="w-5 h-5 text-gray-400 shrink-0 fill-current" viewBox="0 0 24 24">
-                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-                </svg>
+                <GitBranch className="w-5 h-5 text-gray-400 shrink-0" />
                 <input
                   type="text"
                   value={repoInputUrl}
-                  onChange={(e) => setRepoInputUrl(e.target.value)}
-                  placeholder="https://github.com/username/repository"
+                  onChange={(e) => {
+                    setRepoInputUrl(e.target.value);
+                    if (validationError) setValidationError("");
+                  }}
+                  placeholder="https://github.com/organization/your-repository"
                   className="w-full text-sm text-[#1A1A1A] placeholder-gray-400 bg-transparent focus:outline-none"
                 />
               </div>
 
               <button
                 type="submit"
-                className="bg-[#E8532E] hover:bg-[#D4441F] text-white text-sm font-medium px-5 py-2.5 rounded-lg flex items-center justify-center gap-2 shrink-0 transition-colors shadow-sm"
+                className="bg-[#E8532E] hover:bg-[#D4441F] text-white text-sm font-medium px-5 py-2.5 rounded-lg flex items-center justify-center gap-2 shrink-0 transition-colors shadow-sm cursor-pointer"
               >
-                <span>Analyze Repository</span>
+                <span>Analyze Original Repository</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
+
+            {validationError && (
+              <p className="text-xs text-red-500 bg-red-50 py-1.5 px-3 rounded-lg border border-red-200 text-left">
+                {validationError}
+              </p>
+            )}
           </form>
 
-          {/* Demo Project Quick Links */}
-          <div className="space-y-3 pt-2">
-            <div className="text-xs text-gray-500 font-medium">
-              or try a demo repository
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => onUseDemo("https://github.com/example/legacy-payment-system", "legacy-payment-system")}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-white hover:bg-orange-50 text-gray-700 hover:text-[#E8532E] border border-gray-300 hover:border-[#E8532E]/50 transition-all shadow-2xs"
-              >
-                Sample Java Project
-              </button>
-              <button
-                type="button"
-                onClick={() => onUseDemo("https://github.com/example/python-data-pipeline", "python-data-pipeline")}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-white hover:bg-orange-50 text-gray-700 hover:text-[#E8532E] border border-gray-300 hover:border-[#E8532E]/50 transition-all shadow-2xs"
-              >
-                Sample Python Project
-              </button>
-              <button
-                type="button"
-                onClick={() => onUseDemo("https://github.com/example/monolith-e-commerce", "monolith-e-commerce")}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-white hover:bg-orange-50 text-gray-700 hover:text-[#E8532E] border border-gray-300 hover:border-[#E8532E]/50 transition-all shadow-2xs"
-              >
-                Legacy Web App
-              </button>
+          {/* Trust and Original Repository Guidance */}
+          <div className="pt-2">
+            <div className="inline-flex flex-wrap items-center justify-center gap-3 text-xs text-gray-500 font-medium">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                <span>Original Git Links Only</span>
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5 text-gray-500" />
+                <span>Supports GitHub, GitLab & Bitbucket</span>
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1.5">
+                <Database className="w-3.5 h-3.5 text-orange-600" />
+                <span>SQLite Prisma Stored Users</span>
+              </span>
             </div>
           </div>
         </div>
@@ -331,7 +472,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               Import & AST Parsing
             </h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Connect your repository or choose our demo. The engine parses languages, generates ASTs, and indexes symbols locally.
+              Connect your original repository link. The engine clones the source code, generates AST syntax trees, and indexes symbols.
             </p>
           </div>
 
@@ -355,7 +496,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               Impact & Blast Radius
             </h3>
             <p className="text-xs text-gray-500 leading-relaxed">
-              Simulate modifications before writing code. Predict downstream breakage and ask our AI assistant for refactoring strategies.
+              Simulate modifications before writing code. Predict downstream breakage and inspect refactoring strategies.
             </p>
           </div>
         </div>
@@ -368,21 +509,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             Stop guessing what the code does. Start excavating.
           </h2>
           <p className="text-sm text-orange-100 max-w-lg mx-auto">
-            Choose to import any GitHub repository or explore with our pre-loaded legacy payment processing demo.
+            Provide your original Git repository link to excavate AST syntax trees, dependency matrices, and technical debt.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <button
               onClick={onOpenImport}
-              className="bg-white text-[#E8532E] font-medium px-6 py-2.5 rounded-lg text-sm shadow hover:bg-orange-50 transition-colors"
+              className="bg-white text-[#E8532E] font-medium px-6 py-2.5 rounded-lg text-sm shadow hover:bg-orange-50 transition-colors cursor-pointer"
             >
-              Import Repository
+              Import Original Repository
             </button>
-            <button
-              onClick={() => onUseDemo()}
-              className="bg-transparent hover:bg-white/10 text-white font-medium px-6 py-2.5 rounded-lg text-sm border border-white/60 transition-colors"
-            >
-              Use Demo Repository
-            </button>
+            {!currentUser && (
+              <button
+                onClick={() => onOpenAuth("signup")}
+                className="bg-transparent hover:bg-white/10 text-white font-medium px-6 py-2.5 rounded-lg text-sm border border-white/60 transition-colors cursor-pointer"
+              >
+                Authenticate with Google / Apple / Email
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -400,7 +543,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           <div className="flex items-center gap-6">
             <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
-            <a href="#excavation" className="hover:text-gray-900 transition-colors">Excavation</a>
+            <a href="#authenticator" className="hover:text-gray-900 transition-colors">Authenticator</a>
+            <a href="#excavation" className="hover:text-gray-900 transition-colors">Original Repos</a>
             <a href="#how-it-works" className="hover:text-gray-900 transition-colors">Architecture</a>
           </div>
 
@@ -412,3 +556,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     </div>
   );
 };
+
+function GoogleIconSmall() {
+  return (
+    <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+      />
+    </svg>
+  );
+}
+
+function AppleIconSmall() {
+  return (
+    <svg className="w-3.5 h-3.5 shrink-0 fill-current" viewBox="0 0 170 170">
+      <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.71-11.64-14-5.99-9.13-10.74-19.64-14.26-31.54-3.52-11.9-5.28-23.08-5.28-33.54 0-14.89 3.83-27.46 11.5-37.71 7.66-10.25 17.3-15.48 28.91-15.69 4.35 0 9.28 1.15 14.79 3.46 5.51 2.31 9.49 3.51 11.94 3.6 2.12-.1 6.1-1.32 11.94-3.67 5.84-2.35 10.55-3.41 14.13-3.18 10.88.54 19.86 4.67 26.93 12.38-9.58 5.76-14.26 13.91-14.04 24.45.22 8.26 3.42 15.22 9.61 20.87 6.19 5.65 13.48 9.02 21.87 10.11-2.07 6.19-4.57 12.4-7.51 18.63zm-32.33-108.8c0-5.87 2.17-11.41 6.52-16.63 4.35-5.22 9.68-8.8 16-10.74 1.2 5.54.54 11.19-1.98 16.95-2.52 5.76-6.19 10.32-11.01 13.68-3.04 2.18-6.19 3.59-9.45 4.24-.22-2.5-.08-4.99.4-7.46.22-1.09.33-2.18.33-3.26z" />
+    </svg>
+  );
+}
