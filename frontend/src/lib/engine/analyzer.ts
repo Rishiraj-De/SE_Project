@@ -408,7 +408,7 @@ export function analyzeSourceFiles(
     id: `run_${Date.now()}`,
     repoUrl,
     repoName,
-    repoDir: "demo-repo/legacy-payment-system",
+    repoDir: repoName || "SE_Project",
     branch: "main",
     status: "completed",
     analyzedAt: new Date().toISOString(),

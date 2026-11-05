@@ -384,6 +384,8 @@ export default function Home() {
               analysis={analysis}
               onInspectFile={handleNavigateToCodebase}
               onAskAI={handleNavigateToAssistant}
+              onStartAnalysis={handleStartAnalysis}
+              isAnalyzing={isAnalyzing}
             />
           )}
 

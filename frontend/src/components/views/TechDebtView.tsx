@@ -143,9 +143,8 @@ export const TechDebtView: React.FC<TechDebtViewProps> = ({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         <button
           onClick={() => setSelectedSeverity(selectedSeverity === "HIGH" ? "ALL" : "HIGH")}
-          className={`liquid-card text-left transition-all p-4.5 cursor-pointer relative overflow-hidden group ${
-            selectedSeverity === "HIGH" ? "!border-rose-300 ring-2 ring-rose-400/20 bg-rose-50/20" : ""
-          }`}
+          className={`liquid-card text-left transition-all p-4.5 cursor-pointer relative overflow-hidden group ${selectedSeverity === "HIGH" ? "!border-rose-300 ring-2 ring-rose-400/20 bg-rose-50/20" : ""
+            }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-rose-600 uppercase tracking-wider flex items-center gap-1.5">
@@ -170,9 +169,8 @@ export const TechDebtView: React.FC<TechDebtViewProps> = ({
 
         <button
           onClick={() => setSelectedSeverity(selectedSeverity === "MEDIUM" ? "ALL" : "MEDIUM")}
-          className={`liquid-card text-left transition-all p-4.5 cursor-pointer relative overflow-hidden group ${
-            selectedSeverity === "MEDIUM" ? "!border-amber-300 ring-2 ring-amber-400/20 bg-amber-50/20" : ""
-          }`}
+          className={`liquid-card text-left transition-all p-4.5 cursor-pointer relative overflow-hidden group ${selectedSeverity === "MEDIUM" ? "!border-amber-300 ring-2 ring-amber-400/20 bg-amber-50/20" : ""
+            }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider flex items-center gap-1.5">
@@ -197,9 +195,8 @@ export const TechDebtView: React.FC<TechDebtViewProps> = ({
 
         <button
           onClick={() => setSelectedSeverity(selectedSeverity === "LOW" ? "ALL" : "LOW")}
-          className={`liquid-card text-left transition-all p-4.5 cursor-pointer relative overflow-hidden group ${
-            selectedSeverity === "LOW" ? "!border-emerald-300 ring-2 ring-emerald-400/20 bg-emerald-50/20" : ""
-          }`}
+          className={`liquid-card text-left transition-all p-4.5 cursor-pointer relative overflow-hidden group ${selectedSeverity === "LOW" ? "!border-emerald-300 ring-2 ring-emerald-400/20 bg-emerald-50/20" : ""
+            }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider flex items-center gap-1.5">
@@ -224,9 +221,8 @@ export const TechDebtView: React.FC<TechDebtViewProps> = ({
 
         <button
           onClick={() => setSelectedSeverity("ALL")}
-          className={`liquid-card text-left transition-all p-4.5 cursor-pointer relative overflow-hidden group ${
-            selectedSeverity === "ALL" ? "!border-orange-300 ring-2 ring-orange-400/20 bg-orange-50/10" : ""
-          }`}
+          className={`liquid-card text-left transition-all p-4.5 cursor-pointer relative overflow-hidden group ${selectedSeverity === "ALL" ? "!border-orange-300 ring-2 ring-orange-400/20 bg-orange-50/10" : ""
+            }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
@@ -278,11 +274,10 @@ export const TechDebtView: React.FC<TechDebtViewProps> = ({
             <button
               key={sev}
               onClick={() => setSelectedSeverity(sev)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                selectedSeverity === sev
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${selectedSeverity === sev
                   ? "bg-white text-[#E8532E] font-semibold shadow-xs border border-black/[0.04]"
                   : "text-gray-500 hover:text-gray-800 hover:bg-white/40"
-              }`}
+                }`}
             >
               {sev}
             </button>
@@ -331,9 +326,8 @@ export const TechDebtView: React.FC<TechDebtViewProps> = ({
             return (
               <div
                 key={index}
-                className={`liquid-card !p-0 transition-all overflow-hidden ${
-                  isExpanded ? "!border-orange-300 ring-2 ring-orange-500/10 shadow-md" : "hover:border-black/[0.12]"
-                }`}
+                className={`liquid-card !p-0 transition-all overflow-hidden ${isExpanded ? "!border-orange-300 ring-2 ring-orange-500/10 shadow-md" : "hover:border-black/[0.12]"
+                  }`}
               >
                 {/* Main Row */}
                 <div
